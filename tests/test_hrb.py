@@ -56,3 +56,12 @@ class HrbTestCase(TestCase):
         self.assertEqual(response.delivered_body, 'foobar')
         self.assertEqual(response.headers.getRawHeaders('X-Foo'), ['bar'])
         self.assertEqual(response.headers.getRawHeaders('X-Bar'), ['foo'])
+
+    @inlineCallbacks
+    def test_response_cookies(self):
+        url = self.start_handlers([
+            lambda request: request.addCookie('UA-Foo', 'bar')
+            ])
+        response = yield http.request(url)
+        self.assertEqual(response.headers.getRawHeaders('Set-Cookie'),
+            ['UA-Foo=bar'])

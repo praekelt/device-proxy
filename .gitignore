@@ -28,5 +28,5 @@ pip-log.txt
 /ve/
 wurfl-2.1.zip
 wurfl.xml
-hrb/wurfl.py
+hrb/handlers/wurfl_devices.py
 /_trial_temp/

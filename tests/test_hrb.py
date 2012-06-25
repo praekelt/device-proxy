@@ -6,16 +6,22 @@ from twisted.web.server import Site
 from hrb.bouncer import BounceResource
 from hrb.utils import http
 
+class Handler(object):
+    def __init__(self, callback):
+        self.callback = callback
+    
+    def handle_request(self, request):
+        return self.callback(request)
 
 class HrbTestCase(TestCase):
 
     timeout = 1
 
     def setUp(self):
-        self.default_handlers = [
+        self.default_handlers = map(Handler, [
             lambda request: request.setHeader('X-UA-Type', 'small'),
             lambda request: request.setHeader('X-UA-Category', 'mobi'),
-        ]
+        ])
         self._running_handlers = []
 
     def start_handlers(self, handlers):
@@ -51,7 +57,7 @@ class HrbTestCase(TestCase):
             request.setHeader('X-Bar', 'foo')
             return 'bar'
 
-        url = self.start_handlers([handler_1, handler_2])
+        url = self.start_handlers(map(Handler, [handler_1, handler_2]))
         response = yield http.request(url)
         self.assertEqual(response.delivered_body, 'foobar')
         self.assertEqual(response.headers.getRawHeaders('X-Foo'), ['bar'])
@@ -59,9 +65,9 @@ class HrbTestCase(TestCase):
 
     @inlineCallbacks
     def test_response_cookies(self):
-        url = self.start_handlers([
+        url = self.start_handlers(map(Handler, [
             lambda request: request.addCookie('UA-Foo', 'bar')
-            ])
+            ]))
         response = yield http.request(url)
         self.assertEqual(response.headers.getRawHeaders('Set-Cookie'),
             ['UA-Foo=bar'])

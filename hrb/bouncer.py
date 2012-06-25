@@ -13,7 +13,7 @@ class BounceResource(Resource):
 
     def defer_handler(self, handler, request):
         d = defer.Deferred()
-        d.addCallback(handler)
+        d.addCallback(handler.handle_request)
         reactor.callLater(0, d.callback, request)
         return d
 

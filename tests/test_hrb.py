@@ -1,4 +1,3 @@
-from contextlib import contextmanager
 from twisted.trial.unittest import TestCase
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks
@@ -32,7 +31,7 @@ class HrbTestCase(TestCase):
             port.loseConnection()
 
     @inlineCallbacks
-    def test_response(self):
+    def test_response_headers(self):
         url = self.start_handlers(self.default_handlers)
         response = yield http.request(url)
         self.assertEqual(response.delivered_body, '')
@@ -40,3 +39,20 @@ class HrbTestCase(TestCase):
                             ['small'])
         self.assertEqual(response.headers.getRawHeaders('X-UA-Category'),
                             ['mobi'])
+
+    @inlineCallbacks
+    def test_response_body(self):
+
+        def handler_1(request):
+            request.setHeader('X-Foo', 'bar')
+            return 'foo'
+
+        def handler_2(request):
+            request.setHeader('X-Bar', 'foo')
+            return 'bar'
+
+        url = self.start_handlers([handler_1, handler_2])
+        response = yield http.request(url)
+        self.assertEqual(response.delivered_body, 'foobar')
+        self.assertEqual(response.headers.getRawHeaders('X-Foo'), ['bar'])
+        self.assertEqual(response.headers.getRawHeaders('X-Bar'), ['foo'])

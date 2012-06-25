@@ -1,4 +1,4 @@
-from twisted.internet import reactor, defer
+from twisted.internet import defer, reactor
 from twisted.web.resource import Resource
 from twisted.web.server import NOT_DONE_YET
 
@@ -7,16 +7,31 @@ class BounceResource(Resource):
 
     isLeaf = True
 
-    def __init__(self, config):
-        self.config = config
+    def __init__(self, request_handlers):
+        self.request_handlers = request_handlers
         Resource.__init__(self)
 
-    def render(self, request):
+    def defer_handler(self, handler, request):
         d = defer.Deferred()
-        d.addCallback(self.render_result, request)
-        reactor.callLater(0, d.callback, "hello")
+        d.addCallback(handler)
+        reactor.callLater(0, d.callback, request)
+        return d
+
+    def process_request(self, request):
+        deferreds = [self.defer_handler(handler, request) for
+                        handler in self.request_handlers]
+        dl = defer.DeferredList(deferreds, consumeErrors=True)
+        dl.addCallback(self.process_result, request)
+        return dl
+
+    def process_result(self, result, request):
+        response = ''.join([value for (success, value) in result if value])
+        self.render_result(request, response)
+
+    def render(self, request):
+        self.process_request(request)
         return NOT_DONE_YET
 
-    def render_result(self, response, request):
+    def render_result(self, request, response):
         request.write(response)
         request.finish()

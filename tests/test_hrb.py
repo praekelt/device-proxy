@@ -154,11 +154,14 @@ class HrbTestCase(TestCase):
         yield http.request(url, headers={
             'User-Agent': self.iphone_ua,
             })
-        self.assertTrue(self.iphone_ua in self.fake_memcached)
+        cache_key = wurfl_handler.get_cache_key(self.iphone_ua)
+        self.assertTrue(cache_key in self.fake_memcached)
 
-        yield http.request(url, headers={
+        response = yield http.request(url, headers={
             'User-Agent': self.iphone_ua,
             })
 
-        self.assertEqual(self.fake_memcached.times_called(self.iphone_ua), 1)
-        self.assertTrue(self.fake_memcached.get(self.iphone_ua))
+        self.assertEqual(self.fake_memcached.times_called(cache_key), 1)
+        self.assertTrue(self.fake_memcached.get(cache_key))
+        self.assertEqual(response.headers.getRawHeaders('Set-Cookie'),
+            ['%s=high' % wurfl_handler.cookie_name])

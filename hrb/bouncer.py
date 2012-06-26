@@ -1,6 +1,7 @@
 from twisted.internet import defer, reactor
 from twisted.web.resource import Resource
 from twisted.web.server import NOT_DONE_YET
+from twisted.python import log
 
 
 class BounceResource(Resource):
@@ -14,13 +15,14 @@ class BounceResource(Resource):
     def defer_handler(self, handler, request):
         d = defer.Deferred()
         d.addCallback(handler.handle_request)
+        d.addErrback(log.err)
         reactor.callLater(0, d.callback, request)
         return d
 
     def process_request(self, request):
         deferreds = [self.defer_handler(handler, request) for
                         handler in self.request_handlers]
-        dl = defer.DeferredList(deferreds, consumeErrors=True)
+        dl = defer.DeferredList(deferreds)
         dl.addCallback(self.process_result, request)
         return dl
 

@@ -8,7 +8,7 @@ from twisted.protocols.memcache import MemCacheProtocol, DEFAULT_PORT
 from pywurfl.algorithms import TwoStepAnalysis
 
 from hrb.handlers.base import BaseHandler
-from hrb.handlers import wurfl_devices
+from hrb.handlers.wurfl import wurfl_devices
 
 
 class WurflHandler(BaseHandler):
@@ -84,7 +84,4 @@ class WurflHandler(BaseHandler):
         return hashlib.md5(':'.join([self.cache_prefix, key])).hexdigest()
 
     def handle_device(self, request, device):
-        if device.resolution_width < 240:
-            request.addCookie(self.cookie_name, 'medium')
-        else:
-            request.addCookie(self.cookie_name, 'high')
+        raise NotImplementedError("Subclasses should implement this")

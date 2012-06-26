@@ -7,7 +7,7 @@ from twisted.web.server import Site
 
 from hrb.bouncer import BounceResource
 from hrb.handlers.base import BaseHandler
-from hrb.handlers.wurfl import WurflHandler
+from hrb.handlers.wurfl.simple import SimpleWurflHandler
 from hrb.utils import http
 
 
@@ -71,7 +71,8 @@ class HrbTestCase(TestCase):
         ]))
 
         self.fake_memcached = FakeMemcached()
-        self.patch(WurflHandler, 'connect_to_memcached', self.patch_memcached)
+        self.patch(SimpleWurflHandler, 'connect_to_memcached',
+            self.patch_memcached)
 
         self.nokia_ua = 'Nokia3100/1.0 (02.70) Profile/MIDP-1.0 ' \
                             'Configuration/CLDC-1.0'
@@ -88,7 +89,7 @@ class HrbTestCase(TestCase):
         return [handler.setup_handler() for handler in handlers]
 
     def get_wurfl_handler(self):
-        return WurflHandler({
+        return SimpleWurflHandler({
             'cookie_name': 'X-UA-header',
             'cache_prefix': 'prefix',
         }).setup_handler()

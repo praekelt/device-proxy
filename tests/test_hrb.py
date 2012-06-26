@@ -1,5 +1,4 @@
 from twisted.trial.unittest import TestCase
-from twisted.protocols.memcache import DEFAULT_PORT
 from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.web.server import Site

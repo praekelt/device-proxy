@@ -1,6 +1,8 @@
+import hashlib
+
 from twisted.trial.unittest import TestCase
 from twisted.internet import reactor
-from twisted.internet.defer import inlineCallbacks, returnValue, succeed, Deferred
+from twisted.internet.defer import inlineCallbacks, returnValue, Deferred
 from twisted.web.server import Site
 
 from hrb.bouncer import BounceResource
@@ -78,7 +80,6 @@ class HrbTestCase(TestCase):
                             'like Mac OS X; en-us) AppleWebKit/525.18.1 ' \
                             '(KHTML, like Gecko) Version/3.1.1 Mobile/5H11 ' \
                             'Safari/525.20'
-        self.cookie_name = 'X-UA-header'
 
     def patch_memcached(self, **config):
         return self.fake_memcached
@@ -88,7 +89,8 @@ class HrbTestCase(TestCase):
 
     def get_wurfl_handler(self):
         return WurflHandler({
-            'cookie_name': self.cookie_name,
+            'cookie_name': 'X-UA-header',
+            'cache_prefix': 'prefix',
         }).setup_handler()
 
     @inlineCallbacks
@@ -153,6 +155,15 @@ class HrbTestCase(TestCase):
             })
         self.assertEqual(response.headers.getRawHeaders('Set-Cookie'),
                 ['%s=high' % handler.cookie_name])
+
+    @inlineCallbacks
+    def test_caching_prefix(self):
+        wurfl_handler = self.get_wurfl_handler()
+        bouncer, url = yield self.start_handlers([wurfl_handler])
+        handler = yield wurfl_handler
+        cache_key = handler.get_cache_key(self.iphone_ua)
+        self.assertEqual(cache_key,
+            hashlib.md5('prefix:%s' % self.iphone_ua).hexdigest())
 
     @inlineCallbacks
     def test_caching_wurl_check(self):

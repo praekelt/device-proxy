@@ -14,6 +14,7 @@ from hrb.handlers import wurfl_devices
 class WurflHandler(BaseHandler):
     def validate_config(self, config):
         self.cookie_name = config.get('cookie_name', 'X-UA-map')
+        self.cache_prefix = config.get('cache_prefix', '')
         self.memcached_config = config.get('memcached', {})
 
     @inlineCallbacks
@@ -80,7 +81,7 @@ class WurflHandler(BaseHandler):
         return (data.get('body') or '').encode('utf8')
 
     def get_cache_key(self, key):
-        return hashlib.md5(key).hexdigest()
+        return hashlib.md5(':'.join([self.cache_prefix, key])).hexdigest()
 
     def handle_device(self, request, device):
         if device.resolution_width < 240:

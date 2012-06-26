@@ -10,7 +10,7 @@ from hrb.utils import http
 class Handler(object):
     def __init__(self, callback):
         self.callback = callback
-    
+
     def handle_request(self, request):
         return self.callback(request)
 
@@ -77,7 +77,8 @@ class HrbTestCase(TestCase):
     def test_wurfl_nokia_lookup(self):
         url = self.start_handlers([WurflHandler({})])
         response = yield http.request(url, headers={
-            'User-Agent': 'Nokia3100/1.0 (02.70) Profile/MIDP-1.0 Configuration/CLDC-1.0'
+            'User-Agent': 'Nokia3100/1.0 (02.70) Profile/MIDP-1.0 '
+                            'Configuration/CLDC-1.0'
             })
         self.assertEqual(response.headers.getRawHeaders('Set-Cookie'),
                 ['X-UA-map=medium'])
@@ -86,8 +87,10 @@ class HrbTestCase(TestCase):
     def test_wurfl_iphone_lookup(self):
         url = self.start_handlers([WurflHandler({})])
         response = yield http.request(url, headers={
-            'User-Agent': 'Mozilla/5.0 (iPhone; U; CPU iPhone OS 2_2_1 like Mac OS X; en-us) AppleWebKit/525.18.1 (KHTML, like Gecko) Version/3.1.1 Mobile/5H11 Safari/525.20'
+            'User-Agent': 'Mozilla/5.0 (iPhone; U; CPU iPhone OS 2_2_1 '
+                            'like Mac OS X; en-us) AppleWebKit/525.18.1 '
+                            '(KHTML, like Gecko) Version/3.1.1 Mobile/5H11 '
+                            'Safari/525.20'
             })
         self.assertEqual(response.headers.getRawHeaders('Set-Cookie'),
                 ['X-UA-map=high'])
-

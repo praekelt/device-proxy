@@ -7,7 +7,7 @@ from twisted.web.server import Site
 
 from hrb.bouncer import BounceResource
 from hrb.handlers.base import BaseHandler
-from hrb.handlers.wurfl.simple import SimpleWurflHandler
+from hrb.handlers.wurfl_handler.simple import SimpleWurflHandler
 from hrb.utils import http
 
 

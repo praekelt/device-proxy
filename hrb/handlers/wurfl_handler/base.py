@@ -8,7 +8,7 @@ from twisted.protocols.memcache import MemCacheProtocol, DEFAULT_PORT
 from pywurfl.algorithms import TwoStepAnalysis
 
 from hrb.handlers.base import BaseHandler
-from hrb.handlers.wurfl import wurfl_devices
+from hrb.handlers.wurfl_handler import wurfl_devices
 
 
 class WurflHandler(BaseHandler):

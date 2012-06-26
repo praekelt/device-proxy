@@ -28,7 +28,7 @@ pip-log.txt
 /ve/
 wurfl-2.1.zip
 wurfl.xml
-hrb/handlers/wurfl/wurfl_devices.py
+wurfl_devices.py
 /_trial_temp/
 *.log
 dropin.cache

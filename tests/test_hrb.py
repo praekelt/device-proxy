@@ -165,3 +165,16 @@ class HrbTestCase(TestCase):
         self.assertTrue(self.fake_memcached.get(cache_key))
         self.assertEqual(response.headers.getRawHeaders('Set-Cookie'),
             ['%s=high' % wurfl_handler.cookie_name])
+
+    @inlineCallbacks
+    def test_redirect_after_cookie_is_set(self):
+        wurfl_handler = self.get_wurfl_handler()
+        url = yield self.start_handlers([wurfl_handler])
+        request_path = "some/random/path?true=1"
+        response = yield http.request('%s%s' % (url, request_path),
+            headers={
+                'User-Agent': self.iphone_ua,
+            })
+        self.assertEqual(response.code, 302)
+        self.assertEqual(response.headers.getRawHeaders('Location'),
+            ['/%s' % (request_path,)])

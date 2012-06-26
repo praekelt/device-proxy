@@ -49,15 +49,18 @@ class WurflHandler(BaseHandler):
         original_headers = request.responseHeaders.copy()
         original_cookies = request.cookies[:]
         body = self.handle_device(request, device)
+        # Make new copies for comparison
         new_headers = request.responseHeaders.copy()
         new_cookies = request.cookies[:]
 
         # Compare & leave what's new
         for header, _ in original_headers.getAllRawHeaders():
-            new_headers.removeHeader(header)
+            if new_headers.hasHeader(header):
+                new_headers.removeHeader(header)
 
         for cookie in original_cookies:
-            new_cookies.remove(cookie)
+            if cookie in new_cookies:
+                new_cookies.remove(cookie)
 
         yield self.memcached.set(cache_key, json.dumps({
             'headers': new_headers._rawHeaders,

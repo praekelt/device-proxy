@@ -1,6 +1,7 @@
 from twisted.internet import defer, reactor
 from twisted.web.resource import Resource
 from twisted.web.server import NOT_DONE_YET
+from twisted.web import http
 from twisted.python import log
 
 
@@ -35,5 +36,7 @@ class BounceResource(Resource):
         return NOT_DONE_YET
 
     def render_result(self, request, response):
+        request.code = http.FOUND
+        request.setHeader('Location', request.uri)
         request.write(response)
         request.finish()

@@ -1,6 +1,6 @@
 port: 8022
 handlers:
-  - wurfl: hrb.handlers.wurfl.WurflHandler
+  - wurfl: hrb.handlers.wurfl.simple.SimpleWurflHandler
 
 wurfl:
   # All keys in Memcached are prefixed with this

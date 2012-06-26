@@ -32,3 +32,4 @@ wurfl_devices.py
 /_trial_temp/
 *.log
 dropin.cache
+*.pid

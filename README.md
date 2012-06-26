@@ -14,3 +14,9 @@ Assuming you're living in a virtualenv::
 
     $ pip install -r requirements.pip
     $ ./get-wurfl-2.1-db.sh
+
+Running
+-------
+
+    $ twistd hrb --config config.yaml
+

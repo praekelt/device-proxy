@@ -1,0 +1,12 @@
+port: 8022
+handlers:
+  - wurfl: hrb.handlers.wurfl.WurflHandler
+
+wurfl:
+  # All keys in Memcached are prefixed with this
+  cache_prefix: hrb
+
+  # Connect to Memcached with the following parameters
+  memcached:
+    host: localhost
+    port: 11211

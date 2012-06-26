@@ -1,3 +1,6 @@
+from twisted.internet import defer
+
+
 class BaseHandler(object):
 
     def __init__(self, config):
@@ -7,7 +10,7 @@ class BaseHandler(object):
         pass
 
     def setup_handler(self):
-        pass
+        return defer.succeed(self)
 
     def teardown_handler(self):
         pass

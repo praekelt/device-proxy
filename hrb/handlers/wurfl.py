@@ -22,6 +22,7 @@ class WurflHandler(BaseHandler):
         self.algorithm = TwoStepAnalysis(self.devices)
         self.memcached = yield self.connect_to_memcached(
                 **self.memcached_config)
+        returnValue(self)
 
     @inlineCallbacks
     def connect_to_memcached(self, host="localhost", port=DEFAULT_PORT):
@@ -33,7 +34,7 @@ class WurflHandler(BaseHandler):
     def handle_request(self, request):
         user_agent = unicode(request.getHeader('User-Agent') or '')
         cache_key = self.get_cache_key(user_agent)
-        cached = yield self.memcached.get(cache_key)
+        flags, cached = yield self.memcached.get(cache_key)
         if not cached:
             body = yield self.handle_request_and_cache(cache_key,
                 user_agent, request)

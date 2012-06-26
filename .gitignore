@@ -30,3 +30,5 @@ wurfl-2.1.zip
 wurfl.xml
 hrb/handlers/wurfl_devices.py
 /_trial_temp/
+*.log
+dropin.cache

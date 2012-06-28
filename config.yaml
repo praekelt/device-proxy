@@ -1,4 +1,4 @@
-port: 8022
+port: 8025
 handlers:
   - wurfl: hrb.handlers.wurfl_handler.simple.SimpleWurflHandler
 

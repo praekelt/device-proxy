@@ -81,7 +81,7 @@ class WurflHandler(BaseHandler):
         return (data.get('body') or '').encode('utf8')
 
     def get_cache_key(self, key):
-        return hashlib.md5(':'.join([self.cache_prefix, key])).hexdigest()
+        return '%s_%s' % (self.cache_prefix, hashlib.md5(key).hexdigest())
 
     def handle_device(self, request, device):
         raise NotImplementedError("Subclasses should implement this")

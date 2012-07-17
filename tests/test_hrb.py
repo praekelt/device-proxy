@@ -43,6 +43,12 @@ class FakeMemcached(object):
             return 0, self._data.get(key)
         return 0, None
 
+    def increment(self, key, value):
+        int_val = int(self._data[key])
+        int_val += int(value)
+        self.set(key, str(int_val))
+        return str(int_val)
+
     def __contains__(self, key):
         return key in self._data
 
@@ -163,8 +169,24 @@ class HrbTestCase(TestCase):
         bouncer, url = yield self.start_handlers([wurfl_handler])
         handler = yield wurfl_handler
         cache_key = handler.get_cache_key(self.iphone_ua)
+        namespace_version = yield handler.get_namespace_version()
         self.assertEqual(cache_key,
-            'prefix_%s' % hashlib.md5(self.iphone_ua).hexdigest())
+            'prefix_%s_%s' % (
+                namespace_version,
+                hashlib.md5(self.iphone_ua).hexdigest()
+            )
+        )
+
+    @inlineCallbacks
+    def test_cache_clearing(self):
+        wurfl_handler = self.get_wurfl_handler()
+        bouncer, url = yield self.start_handlers([wurfl_handler])
+        handler = yield wurfl_handler
+        namespace_version = yield handler.get_namespace_version()
+        self.assertEqual(namespace_version, '0')
+        yield handler.increment_namespace()
+        namespace_version = yield handler.get_namespace_version()
+        self.assertEqual(namespace_version, '1')
 
     @inlineCallbacks
     def test_caching_wurl_check(self):

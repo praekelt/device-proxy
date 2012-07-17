@@ -32,15 +32,16 @@ class FakeMemcached(object):
         self._data = {}
         self._calls = {}
 
-    def set(self, key, value):
-        self._data[key] = value
+    def set(self, key, value, expireTime=0):
+        self._data[key] = (value, expireTime)
 
     def get(self, key):
         if key in self._data:
             call_counter = self._calls.setdefault(key, 0)
             call_counter += 1
             self._calls[key] = call_counter
-            return 0, self._data.get(key)
+            value, _ = self._data.get(key)
+            return 0, value
         return 0, None
 
     def __contains__(self, key):
@@ -48,6 +49,10 @@ class FakeMemcached(object):
 
     def times_called(self, key):
         return self._calls.get(key)
+
+    def key_lifetime(self, key):
+        value, life_time = self._data.get(key)
+        return life_time
 
 
 class HrbTestCase(TestCase):
@@ -92,6 +97,7 @@ class HrbTestCase(TestCase):
         return SimpleWurflHandler({
             'cookie_name': 'X-UA-header',
             'cache_prefix': 'prefix',
+            'cache_lifetime': 100,
         }).setup_handler()
 
     @inlineCallbacks
@@ -198,3 +204,17 @@ class HrbTestCase(TestCase):
         self.assertEqual(response.code, 302)
         self.assertEqual(response.headers.getRawHeaders('Location'),
             ['/%s' % (request_path,)])
+
+    @inlineCallbacks
+    def test_cache_lifetime(self):
+        wurfl_handler = self.get_wurfl_handler()
+        bouncer, url = yield self.start_handlers([wurfl_handler])
+        handler = yield wurfl_handler
+        request_path = "some/random/path?true=1"
+        response = yield http.request('%s%s' % (url, request_path),
+            headers={
+                'User-Agent': self.iphone_ua,
+            })
+        self.assertEqual(response.code, 302)
+        cache_key = handler.get_cache_key(self.iphone_ua)
+        self.assertEqual(self.fake_memcached.key_lifetime(cache_key), 100)

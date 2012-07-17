@@ -5,6 +5,9 @@ handlers:
 wurfl:
   # All keys in Memcached are prefixed with this
   cache_prefix: hrb
+  cache_lifetime: 100   # defaults to 0, which means it won't expire unless
+                        # memcached decides to delete the key based on its
+                        # least-recently-used counters when memory fills up.
 
   # Connect to Memcached with the following parameters
   memcached:

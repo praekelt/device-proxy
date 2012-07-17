@@ -92,6 +92,7 @@ class HrbTestCase(TestCase):
         return SimpleWurflHandler({
             'cookie_name': 'X-UA-header',
             'cache_prefix': 'prefix',
+            'cache_prefix_delimiter': '_',
         }).setup_handler()
 
     @inlineCallbacks

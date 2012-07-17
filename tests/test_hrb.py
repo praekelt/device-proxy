@@ -170,7 +170,7 @@ class HrbTestCase(TestCase):
         handler = yield wurfl_handler
         cache_key = handler.get_cache_key(self.iphone_ua)
         self.assertEqual(cache_key,
-            hashlib.md5('prefix:%s' % self.iphone_ua).hexdigest())
+            'prefix_%s' % hashlib.md5(self.iphone_ua).hexdigest())
 
     @inlineCallbacks
     def test_caching_wurl_check(self):

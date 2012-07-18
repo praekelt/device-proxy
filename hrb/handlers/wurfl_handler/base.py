@@ -25,6 +25,7 @@ class WurflHandler(BaseHandler):
         self.algorithm = TwoStepAnalysis(self.devices)
         self.memcached = yield self.connect_to_memcached(
                 **self.memcached_config)
+        self.namespace = yield self.get_namespace()
         returnValue(self)
 
     @inlineCallbacks
@@ -32,6 +33,33 @@ class WurflHandler(BaseHandler):
         creator = protocol.ClientCreator(reactor, MemCacheProtocol)
         client = yield creator.connectTCP(host, port)
         returnValue(client)
+
+    def get_namespace_key(self):
+        return '%s_namespace' % (self.cache_prefix,)
+
+    @inlineCallbacks
+    def get_namespace_version(self):
+        namespace_key = self.get_namespace_key()
+        _, version = yield self.memcached.get(namespace_key)
+        if not version:
+            version = 0
+            yield self.memcached.set(namespace_key, version)
+        returnValue(str(version))
+
+    @inlineCallbacks
+    def get_namespace(self):
+        version = yield self.get_namespace_version()
+        returnValue(''.join([
+            self.cache_prefix,
+            self.cache_prefix_delimiter,
+            version,
+        ]))
+
+    @inlineCallbacks
+    def increment_namespace(self, value=1):
+        namespace_key = self.get_namespace_key()
+        yield self.memcached.increment(namespace_key, value)
+        self.namespace = self.get_namespace()
 
     @inlineCallbacks
     def handle_request(self, request):
@@ -85,7 +113,7 @@ class WurflHandler(BaseHandler):
 
     def get_cache_key(self, key):
         return ''.join([
-            self.cache_prefix,
+            self.namespace,
             self.cache_prefix_delimiter,
             hashlib.md5(key).hexdigest()
         ])

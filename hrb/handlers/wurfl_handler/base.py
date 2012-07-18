@@ -16,6 +16,7 @@ class WurflHandler(BaseHandler):
         self.cookie_name = config.get('cookie_name', 'X-UA-map')
         self.cache_prefix = config.get('cache_prefix', '')
         self.cache_prefix_delimiter = config.get('cache_prefix_delimiter', '#')
+        self.cache_lifetime = int(config.get('cache_lifetime', 0))
         self.memcached_config = config.get('memcached', {})
 
     @inlineCallbacks
@@ -97,7 +98,8 @@ class WurflHandler(BaseHandler):
             'headers': new_headers._rawHeaders,
             'cookies': new_cookies,
             'body': body,
-        }))
+        }), expireTime=self.cache_lifetime)
+
         returnValue(body)
 
     def handle_request_from_cache(self, cached, request):

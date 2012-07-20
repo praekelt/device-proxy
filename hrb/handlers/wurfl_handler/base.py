@@ -41,9 +41,9 @@ class WurflHandler(BaseHandler):
     def get_namespace_version(self):
         namespace_key = self.get_namespace_key()
         _, version = yield self.memcached.get(namespace_key)
-        if not version:
+        if version is None:
             version = 0
-            yield self.memcached.set(namespace_key, version)
+            yield self.memcached.set(namespace_key, str(version))
         returnValue(str(version))
 
     @inlineCallbacks

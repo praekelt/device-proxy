@@ -45,7 +45,7 @@ class FakeMemcached(object):
         return 0, None
 
     def increment(self, key, value):
-        int_val = int(self._data[key])
+        int_val = int(self._data[key][0])
         int_val += int(value)
         self.set(key, str(int_val))
         return str(int_val)

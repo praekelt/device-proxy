@@ -1,3 +1,5 @@
+from twisted.web import http
+
 from hrb.handlers.wurfl_handler.base import WurflHandler
 
 
@@ -8,3 +10,5 @@ class SimpleWurflHandler(WurflHandler):
             request.addCookie(self.cookie_name, 'medium')
         else:
             request.addCookie(self.cookie_name, 'high')
+        request.code = http.FOUND
+        request.setHeader('Location', request.uri)

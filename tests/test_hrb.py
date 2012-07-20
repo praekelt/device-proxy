@@ -105,6 +105,7 @@ class HrbTestCase(TestCase):
             'cache_prefix': 'prefix',
             'cache_prefix_delimiter': '_',
             'cache_lifetime': 100,
+            'debug_path': '/_debug',
         }).setup_handler()
 
     @inlineCallbacks
@@ -241,3 +242,14 @@ class HrbTestCase(TestCase):
         self.assertEqual(response.code, 302)
         cache_key = handler.get_cache_key(self.iphone_ua)
         self.assertEqual(self.fake_memcached.key_lifetime(cache_key), 100)
+
+    @inlineCallbacks
+    def test_debug_path(self):
+        wurfl_handler = self.get_wurfl_handler()
+        bouncer, url = yield self.start_handlers([wurfl_handler])
+        request_path = "_debug"
+        response = yield http.request('%s%s' % (url, request_path),
+            headers={
+                'User-Agent': self.iphone_ua,
+            })
+        self.assertEqual(response.code, 200)

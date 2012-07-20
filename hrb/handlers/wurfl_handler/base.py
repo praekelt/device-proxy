@@ -4,11 +4,14 @@ import json
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet import protocol, reactor
 from twisted.protocols.memcache import MemCacheProtocol, DEFAULT_PORT
+from twisted.web.template import flattenString
+from twisted.python import log
 
 from pywurfl.algorithms import TwoStepAnalysis
 
 from hrb.handlers.base import BaseHandler
 from hrb.handlers.wurfl_handler import wurfl_devices
+from hrb.handlers.wurfl_handler import debug
 
 
 class WurflHandler(BaseHandler):
@@ -17,6 +20,7 @@ class WurflHandler(BaseHandler):
         self.cache_prefix = config.get('cache_prefix', '')
         self.cache_prefix_delimiter = config.get('cache_prefix_delimiter', '#')
         self.cache_lifetime = int(config.get('cache_lifetime', 0))
+        self.debug_path = config.get('debug_path', None)
         self.memcached_config = config.get('memcached', {})
 
     @inlineCallbacks
@@ -28,10 +32,14 @@ class WurflHandler(BaseHandler):
         self.namespace = yield self.get_namespace()
         returnValue(self)
 
+    def shutdown(self, failure):
+        log.err(failure)
+        reactor.stop()
+
     @inlineCallbacks
     def connect_to_memcached(self, host="localhost", port=DEFAULT_PORT):
         creator = protocol.ClientCreator(reactor, MemCacheProtocol)
-        client = yield creator.connectTCP(host, port)
+        client = yield creator.connectTCP(host, port).addErrback(self.shutdown)
         returnValue(client)
 
     def get_namespace_key(self):
@@ -66,11 +74,17 @@ class WurflHandler(BaseHandler):
         user_agent = unicode(request.getHeader('User-Agent') or '')
         cache_key = self.get_cache_key(user_agent)
         flags, cached = yield self.memcached.get(cache_key)
-        if not cached:
-            body = yield self.handle_request_and_cache(cache_key,
-                user_agent, request)
+
+        if request.path == self.debug_path:
+            device = self.devices.select_ua(user_agent, search=self.algorithm)
+            body = yield self.debug_device(request, device)
         else:
-            body = self.handle_request_from_cache(cached, request)
+            if not cached:
+                body = yield self.handle_request_and_cache(cache_key,
+                    user_agent, request)
+            else:
+                body = self.handle_request_from_cache(cached, request)
+
         returnValue(body)
 
     @inlineCallbacks
@@ -80,6 +94,8 @@ class WurflHandler(BaseHandler):
         # Make copies
         original_headers = request.responseHeaders.copy()
         original_cookies = request.cookies[:]
+
+        # Otherwise continue as normal
         body = self.handle_device(request, device)
         # Make new copies for comparison
         new_headers = request.responseHeaders.copy()
@@ -98,6 +114,7 @@ class WurflHandler(BaseHandler):
             'headers': new_headers._rawHeaders,
             'cookies': new_cookies,
             'body': body,
+            'code': request.code,
         }), expireTime=self.cache_lifetime)
 
         returnValue(body)
@@ -106,9 +123,11 @@ class WurflHandler(BaseHandler):
         # JSON returns everything as unicode which Twisted isn't too happy
         # with, encode to utf8 bytestring instead.
         data = json.loads(cached)
-        for key, value in data['headers'].items():
-            request.setHeader(key.encode('utf8'), value.encode('utf8'))
+        for key, values in data['headers'].items():
+            for value in values:
+                request.setHeader(key.encode('utf8'), value.encode('utf8'))
         request.cookies.extend([c.encode('utf8') for c in data['cookies']])
+        request.code = data['code']
         return (data.get('body') or '').encode('utf8')
 
     def get_cache_key(self, key):
@@ -117,6 +136,9 @@ class WurflHandler(BaseHandler):
             self.cache_prefix_delimiter,
             hashlib.md5(key).hexdigest()
         ])
+
+    def debug_device(self, request, device):
+        return flattenString(None, debug.DebugElement(device))
 
     def handle_device(self, request, device):
         raise NotImplementedError("Subclasses should implement this")

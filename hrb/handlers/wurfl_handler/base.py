@@ -17,6 +17,7 @@ class WurflHandler(BaseHandler):
         self.cache_prefix = config.get('cache_prefix', '')
         self.cache_prefix_delimiter = config.get('cache_prefix_delimiter', '#')
         self.cache_lifetime = int(config.get('cache_lifetime', 0))
+        self.debug_path = config.get('debug_path', None)
         self.memcached_config = config.get('memcached', {})
 
     @inlineCallbacks
@@ -80,6 +81,13 @@ class WurflHandler(BaseHandler):
         # Make copies
         original_headers = request.responseHeaders.copy()
         original_cookies = request.cookies[:]
+
+        # If we're being hit on the debug path, handle accordingly
+        print request.path, 'vs', self.debug_path
+        if request.path == self.debug_path:
+            returnValue(self.debug_device(request, device))
+
+        # Otherwise continue as normal
         body = self.handle_device(request, device)
         # Make new copies for comparison
         new_headers = request.responseHeaders.copy()
@@ -117,6 +125,9 @@ class WurflHandler(BaseHandler):
             self.cache_prefix_delimiter,
             hashlib.md5(key).hexdigest()
         ])
+
+    def debug_device(self, request, device):
+        raise NotImplementedError("Subclasses should implement this")
 
     def handle_device(self, request, device):
         raise NotImplementedError("Subclasses should implement this")

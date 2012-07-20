@@ -8,7 +8,8 @@ wurfl:
   cache_lifetime: 100   # defaults to 0, which means it won't expire unless
                         # memcached decides to delete the key based on its
                         # least-recently-used counters when memory fills up.
-
+  # Path to hit to get debug info on the device switcher
+  debug_path: /_debug
   # Connect to Memcached with the following parameters
   memcached:
     host: localhost

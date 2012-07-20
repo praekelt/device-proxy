@@ -45,7 +45,7 @@ class FakeMemcached(object):
         return 0, None
 
     def increment(self, key, value):
-        int_val = int(self._data[key])
+        int_val = int(self._data[key][0])
         int_val += int(value)
         self.set(key, str(int_val))
         return str(int_val)
@@ -105,6 +105,7 @@ class HrbTestCase(TestCase):
             'cache_prefix': 'prefix',
             'cache_prefix_delimiter': '_',
             'cache_lifetime': 100,
+            'debug_path': '/_debug',
         }).setup_handler()
 
     @inlineCallbacks
@@ -241,3 +242,16 @@ class HrbTestCase(TestCase):
         self.assertEqual(response.code, 302)
         cache_key = handler.get_cache_key(self.iphone_ua)
         self.assertEqual(self.fake_memcached.key_lifetime(cache_key), 100)
+
+    @inlineCallbacks
+    def test_debug_path(self):
+        wurfl_handler = self.get_wurfl_handler()
+        bouncer, url = yield self.start_handlers([wurfl_handler])
+        request_path = "_debug"
+        response = yield http.request('%s%s' % (url, request_path),
+            headers={
+                'User-Agent': self.iphone_ua,
+            })
+        self.assertEqual(response.code, 302)
+        self.assertEqual(response.headers.getRawHeaders('Location'),
+            ['/%s' % (request_path,)])

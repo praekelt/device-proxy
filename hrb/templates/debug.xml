@@ -1,6 +1,7 @@
 <html xmlns:t="http://twistedmatrix.com/ns/twisted.web.template/0.1">
 <body>
   <div t:render="render_device">
+    <h2>Device</h2>
     <dl>
         <dt>User Agent:</dt>
         <dd><t:slot name="user_agent" /></dd>
@@ -9,6 +10,7 @@
     </dl>
   </div>
   <div>
+    <h2>Fallbacks</h2>
     <ol>
         <li t:render="render_fallbacks">
             <t:slot name="fallback" />
@@ -16,6 +18,7 @@
     </ol>
   </div>
   <div>
+    <h2>Capabilities</h2>
     <table t:render="render_capabilities">
         <tr>
             <th colspan="2"><t:slot name="group"/></th>

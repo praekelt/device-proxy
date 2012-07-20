@@ -4,12 +4,13 @@ import json
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet import protocol, reactor
 from twisted.protocols.memcache import MemCacheProtocol, DEFAULT_PORT
-from twisted.web import http
+from twisted.web.template import flattenString
 
 from pywurfl.algorithms import TwoStepAnalysis
 
 from hrb.handlers.base import BaseHandler
 from hrb.handlers.wurfl_handler import wurfl_devices
+from hrb.handlers.wurfl_handler import debug
 
 
 class WurflHandler(BaseHandler):
@@ -71,16 +72,13 @@ class WurflHandler(BaseHandler):
 
         if request.path == self.debug_path:
             device = self.devices.select_ua(user_agent, search=self.algorithm)
-            body = self.debug_device(request, device, user_agent)
+            body = yield self.debug_device(request, device)
         else:
             if not cached:
                 body = yield self.handle_request_and_cache(cache_key,
                     user_agent, request)
             else:
                 body = self.handle_request_from_cache(cached, request)
-
-            #moved the redirect stuff from the bouncer file
-            request.code = http.FOUND
 
         returnValue(body)
 
@@ -111,6 +109,7 @@ class WurflHandler(BaseHandler):
             'headers': new_headers._rawHeaders,
             'cookies': new_cookies,
             'body': body,
+            'code': request.code,
         }), expireTime=self.cache_lifetime)
 
         returnValue(body)
@@ -119,9 +118,11 @@ class WurflHandler(BaseHandler):
         # JSON returns everything as unicode which Twisted isn't too happy
         # with, encode to utf8 bytestring instead.
         data = json.loads(cached)
-        for key, value in data['headers'].items():
-            request.setHeader(key.encode('utf8'), value.encode('utf8'))
+        for key, values in data['headers'].items():
+            for value in values:
+                request.setHeader(key.encode('utf8'), value.encode('utf8'))
         request.cookies.extend([c.encode('utf8') for c in data['cookies']])
+        request.code = data['code']
         return (data.get('body') or '').encode('utf8')
 
     def get_cache_key(self, key):
@@ -131,8 +132,8 @@ class WurflHandler(BaseHandler):
             hashlib.md5(key).hexdigest()
         ])
 
-    def debug_device(self, request, device, user_agent):
-        raise NotImplementedError("Subclasses should implement this")
+    def debug_device(self, request, device):
+        return flattenString(None, debug.DebugElement(device))
 
     def handle_device(self, request, device):
         raise NotImplementedError("Subclasses should implement this")

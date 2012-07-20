@@ -51,6 +51,5 @@ class BounceResource(Resource):
             return 'Waiting on handlers to start.'
 
     def render_result(self, request, response):
-        request.setHeader('Location', request.uri)
         request.write(response)
         request.finish()

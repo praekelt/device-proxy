@@ -1,0 +1,30 @@
+<html xmlns:t="http://twistedmatrix.com/ns/twisted.web.template/0.1">
+<body>
+  <div t:render="render_device">
+    <dl>
+        <dt>User Agent:</dt>
+        <dd><t:slot name="user_agent" /></dd>
+        <dt>Wurfl ID:</dt>
+        <dd><t:slot name="wurfl_id" /></dd>
+    </dl>
+  </div>
+  <div>
+    <ol>
+        <li t:render="render_fallbacks">
+            <t:slot name="fallback" />
+        </li>
+    </ol>
+  </div>
+  <div>
+    <table t:render="render_capabilities">
+        <tr>
+            <th colspan="2"><t:slot name="group"/></th>
+        </tr>
+        <tr t:render="render_capability">
+            <th><t:slot name="property"/></th>
+            <td><t:slot name="value"/></td>
+        </tr>
+    </table>
+  </div>
+</body>
+</html>

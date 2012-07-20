@@ -253,5 +253,3 @@ class HrbTestCase(TestCase):
                 'User-Agent': self.iphone_ua,
             })
         self.assertEqual(response.code, 200)
-        self.assertEqual(response.headers.getRawHeaders('Location'),
-            ['/%s' % (request_path,)])

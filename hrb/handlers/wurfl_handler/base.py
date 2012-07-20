@@ -4,6 +4,7 @@ import json
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet import protocol, reactor
 from twisted.protocols.memcache import MemCacheProtocol, DEFAULT_PORT
+from twisted.web import http
 
 from pywurfl.algorithms import TwoStepAnalysis
 
@@ -67,11 +68,20 @@ class WurflHandler(BaseHandler):
         user_agent = unicode(request.getHeader('User-Agent') or '')
         cache_key = self.get_cache_key(user_agent)
         flags, cached = yield self.memcached.get(cache_key)
-        if not cached:
-            body = yield self.handle_request_and_cache(cache_key,
-                user_agent, request)
+
+        if request.path == self.debug_path:
+            device = self.devices.select_ua(user_agent, search=self.algorithm)
+            body = self.debug_device(request, device, user_agent)
         else:
-            body = self.handle_request_from_cache(cached, request)
+            if not cached:
+                body = yield self.handle_request_and_cache(cache_key,
+                    user_agent, request)
+            else:
+                body = self.handle_request_from_cache(cached, request)
+
+            #moved the redirect stuff from the bouncer file
+            request.code = http.FOUND
+
         returnValue(body)
 
     @inlineCallbacks
@@ -81,11 +91,6 @@ class WurflHandler(BaseHandler):
         # Make copies
         original_headers = request.responseHeaders.copy()
         original_cookies = request.cookies[:]
-
-        # If we're being hit on the debug path, handle accordingly
-        print request.path, 'vs', self.debug_path
-        if request.path == self.debug_path:
-            returnValue(self.debug_device(request, device))
 
         # Otherwise continue as normal
         body = self.handle_device(request, device)
@@ -126,7 +131,7 @@ class WurflHandler(BaseHandler):
             hashlib.md5(key).hexdigest()
         ])
 
-    def debug_device(self, request, device):
+    def debug_device(self, request, device, user_agent):
         raise NotImplementedError("Subclasses should implement this")
 
     def handle_device(self, request, device):

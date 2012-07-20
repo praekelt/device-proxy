@@ -1,7 +1,7 @@
 <html xmlns:t="http://twistedmatrix.com/ns/twisted.web.template/0.1">
 <body>
+  <h2>Device</h2>
   <div t:render="render_device">
-    <h2>Device</h2>
     <dl>
         <dt>User Agent:</dt>
         <dd><t:slot name="user_agent" /></dd>
@@ -9,19 +9,30 @@
         <dd><t:slot name="wurfl_id" /></dd>
     </dl>
   </div>
+  <h2>Fallbacks</h2>
   <div>
-    <h2>Fallbacks</h2>
     <ol>
         <li t:render="render_fallbacks">
             <t:slot name="fallback" />
         </li>
     </ol>
   </div>
+  <h2>Capabilities</h2>
   <div>
-    <h2>Capabilities</h2>
-    <table t:render="render_capabilities">
+    <p>Shortcuts to capabilities</p>
+    <a t:render="render_shortcuts">
+      <t:attr name="href">#<t:slot name="group"/></t:attr>
+      <t:slot name="group" />
+    </a>
+  </div>
+  <div t:render="render_capabilities">
+    <p> </p>
+    <table>
         <tr>
-            <th colspan="2"><t:slot name="group"/></th>
+            <th colspan="2">
+              <t:attr name="id"><t:slot name="group"/></t:attr>
+              <t:slot name="group"/>
+            </th>
         </tr>
         <tr t:render="render_capability">
             <th><t:slot name="property"/></th>

@@ -29,6 +29,11 @@ class DebugElement(Element):
             yield DebugCapabilityElement(self.device, group,
                 loader=TagLoader(tag))
 
+    @renderer
+    def render_shortcuts(self, request, tag):
+        for group in self.device.groups.keys():
+            yield tag.clone().fillSlots(group=group.title())
+
 
 class DebugCapabilityElement(Element):
 

@@ -81,7 +81,6 @@ def request(url, data=None, headers={}, method='POST'):
                       url,
                       mkheaders(headers),
                       StringProducer(data) if data else None)
-
     def handle_response(response):
         return SimplishReceiver(response).deferred
 

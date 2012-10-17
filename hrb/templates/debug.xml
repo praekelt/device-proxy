@@ -22,7 +22,7 @@
     <p>Shortcuts to capabilities</p>
     <a t:render="render_shortcuts">
       <t:attr name="href">#<t:slot name="group"/></t:attr>
-      <t:slot name="group" />
+      <t:slot name="group"/>
     </a>
   </div>
   <div t:render="render_capabilities">

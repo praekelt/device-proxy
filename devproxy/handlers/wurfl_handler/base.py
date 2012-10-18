@@ -5,7 +5,6 @@ from twisted.internet.defer import inlineCallbacks, returnValue, succeed
 from twisted.internet import protocol, reactor
 from twisted.protocols.memcache import MemCacheProtocol, DEFAULT_PORT
 from twisted.web.template import flattenString
-from twisted.python import log
 
 from pywurfl.algorithms import TwoStepAnalysis
 
@@ -32,14 +31,10 @@ class WurflHandler(BaseHandler):
         self.namespace = yield self.get_namespace()
         returnValue(self)
 
-    def shutdown(self, failure):
-        log.err(failure)
-        reactor.stop()
-
     @inlineCallbacks
     def connect_to_memcached(self, host="localhost", port=DEFAULT_PORT):
         creator = protocol.ClientCreator(reactor, MemCacheProtocol)
-        client = yield creator.connectTCP(host, port).addErrback(self.shutdown)
+        client = yield creator.connectTCP(host, port)
         returnValue(client)
 
     def get_namespace_key(self):

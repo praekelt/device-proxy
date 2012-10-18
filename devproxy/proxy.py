@@ -1,11 +1,17 @@
 from urllib import quote as urlquote
 
-from twisted.internet import defer
+from twisted.python import log
+from twisted.internet import defer, reactor
 from twisted.web import proxy, server, http
+
+
+class ProxyClientFactory(proxy.ProxyClientFactory):
+    noisy = False
 
 
 class ReverseProxyResource(proxy.ReverseProxyResource):
 
+    proxyClientFactoryClass = ProxyClientFactory
     encoding = 'utf-8'
 
     def __init__(self, handlers, *args, **kwargs):
@@ -46,7 +52,12 @@ class ProxySite(server.Site):
     resourceClass = ReverseProxyResource
 
     def __init__(self, config, *args, **kwargs):
+        # Go straight the server.Site's super, we're essentially doing the same
+        # this but we only create `self.resource` when `startWorker()` is
+        # completed as that's the first place where we can return a Deferred
+        # (which we need to return because the handler loading is async)
         http.HTTPFactory.__init__(self, *args, **kwargs)
+        # server.Site uses this internally to manage sessions.
         self.sessions = {}
 
         handlers = []
@@ -69,7 +80,12 @@ class ProxySite(server.Site):
         server.Site.startFactory(self)
         d = defer.DeferredList([h.setup_handler() for h in self.handlers])
         d.addCallback(self.setup_resource)
+        d.addErrback(self.shutdown)
         return d
+
+    def shutdown(self, failure):
+        log.err(failure.value)
+        reactor.stop()
 
     def setup_resource(self, results):
         started_handlers = []

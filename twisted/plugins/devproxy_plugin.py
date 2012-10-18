@@ -6,8 +6,6 @@ from twisted.python import usage
 from twisted.plugin import IPlugin
 from twisted.application.service import IServiceMaker
 from twisted.application import internet
-from twisted.web.server import Site
-from twisted.python import log
 
 from devproxy.proxy import ProxySite
 

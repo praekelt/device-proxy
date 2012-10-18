@@ -97,7 +97,7 @@ class WurlfHandlerTestCase(ProxyTestCase):
     def test_cache_lifetime(self):
         proxy, url = self.start_proxy(self.wurfl_handlers)
         [handler] = self.wurfl_handlers
-        request_path = "some/random/path?true=1"
+        request_path = "/some/random/path?true=1"
         response = yield http.request('%s%s' % (url, request_path),
             headers={
                 'User-Agent': self.iphone_ua,
@@ -109,7 +109,7 @@ class WurlfHandlerTestCase(ProxyTestCase):
     @inlineCallbacks
     def test_debug_path(self):
         proxy, url = self.start_proxy(self.wurfl_handlers)
-        request_path = "_debug"
+        request_path = "/_debug"
         response = yield http.request('%s%s' % (url, request_path),
             headers={
                 'User-Agent': self.iphone_ua,

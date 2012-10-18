@@ -53,9 +53,8 @@ class ReverseProxyResource(proxy.ReverseProxyResource):
         if self.health_path and path == self.health_path:
             return HealthResource()
 
-        return ReverseProxyResource(self.handlers, self.debug_path,
-            self.health_path, self.host, self.port,
-            self.path + '/' + urlquote(path, safe=""), self.reactor)
+        return ReverseProxyResource(self.handlers, '', '', self.host,
+            self.port, self.path + '/' + urlquote(path, safe=""), self.reactor)
 
     def render(self, request):
         self.call_handlers(request)

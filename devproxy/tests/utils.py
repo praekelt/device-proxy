@@ -9,7 +9,6 @@ from twisted.web.server import Site
 
 class ProxyTestCase(TestCase):
 
-    timeout = 1
     nokia_ua = 'Nokia3100/1.0 (02.70) Profile/MIDP-1.0 ' \
                 'Configuration/CLDC-1.0'
 
@@ -45,7 +44,7 @@ class ProxyTestCase(TestCase):
         site_factory = Site(proxy)
         port = reactor.listenTCP(0, site_factory)
         addr = port.getHost()
-        url = "http://%s:%s/" % (addr.host, addr.port)
+        url = "http://%s:%s" % (addr.host, addr.port)
         self._running_proxies.append((port, proxy))
         return (proxy, url)
 

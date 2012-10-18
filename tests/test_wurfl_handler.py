@@ -1,15 +1,10 @@
 import hashlib
 
-from twisted.trial.unittest import TestCase
-from twisted.internet import reactor
-from twisted.internet.defer import (inlineCallbacks, returnValue, Deferred,
-                                    succeed)
-from twisted.web.server import Site
+from twisted.internet.defer import inlineCallbacks
 
-from devproxy.bouncer import BounceResource
 from devproxy.handlers.wurfl_handler.simple import SimpleWurflHandler
 from devproxy.utils import http
-from tests.utils import TestHandler, FakeMemcached, HRBTestCase, MockHttpServer
+from tests.utils import FakeMemcached, HRBTestCase
 
 
 class WurlfHandlerTestCase(HRBTestCase):
@@ -38,6 +33,7 @@ class WurlfHandlerTestCase(HRBTestCase):
         response = yield http.request(url, headers={
             'User-Agent': self.nokia_ua,
             })
+        self.assertEqual(response.delivered_body, 'foo')
         req = yield self.mocked_backend.queue.get()
         self.assertEqual(req.requestHeaders.getRawHeaders('x-ua-header'),
             ['medium'])
@@ -48,6 +44,7 @@ class WurlfHandlerTestCase(HRBTestCase):
         response = yield http.request(url, headers={
             'User-Agent': self.iphone_ua,
             })
+        self.assertEqual(response.delivered_body, 'foo')
         req = yield self.mocked_backend.queue.get()
         self.assertEqual(req.requestHeaders.getRawHeaders('x-ua-header'),
             ['high'])
@@ -89,6 +86,7 @@ class WurlfHandlerTestCase(HRBTestCase):
             'User-Agent': self.iphone_ua,
             })
 
+        self.assertEqual(response.delivered_body, 'foo')
         self.assertEqual(self.fake_memcached.times_called(cache_key), 1)
         self.assertTrue(self.fake_memcached.get(cache_key))
         req = yield self.mocked_backend.queue.get()
@@ -104,6 +102,7 @@ class WurlfHandlerTestCase(HRBTestCase):
             headers={
                 'User-Agent': self.iphone_ua,
             })
+        self.assertEqual(response.delivered_body, 'foo')
         cache_key = handler.get_cache_key(self.iphone_ua)
         self.assertEqual(self.fake_memcached.key_lifetime(cache_key), 100)
 

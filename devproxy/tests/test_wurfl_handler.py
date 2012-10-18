@@ -29,7 +29,7 @@ class WurlfHandlerTestCase(ProxyTestCase):
 
     @inlineCallbacks
     def test_wurfl_nokia_lookup(self):
-        bouncer, url = self.start_proxy(self.wurfl_handlers)
+        proxy, url = self.start_proxy(self.wurfl_handlers)
         response = yield http.request(url, headers={
             'User-Agent': self.nokia_ua,
             })
@@ -40,7 +40,7 @@ class WurlfHandlerTestCase(ProxyTestCase):
 
     @inlineCallbacks
     def test_wurfl_iphone_lookup(self):
-        bouncer, url = self.start_proxy(self.wurfl_handlers)
+        proxy, url = self.start_proxy(self.wurfl_handlers)
         response = yield http.request(url, headers={
             'User-Agent': self.iphone_ua,
             })
@@ -51,7 +51,7 @@ class WurlfHandlerTestCase(ProxyTestCase):
 
     @inlineCallbacks
     def test_caching_prefix(self):
-        bouncer, url = self.start_proxy(self.wurfl_handlers)
+        proxy, url = self.start_proxy(self.wurfl_handlers)
         [handler] = self.wurfl_handlers
         cache_key = handler.get_cache_key(self.iphone_ua)
         namespace_version = yield handler.get_namespace_version()
@@ -64,7 +64,7 @@ class WurlfHandlerTestCase(ProxyTestCase):
 
     @inlineCallbacks
     def test_cache_clearing(self):
-        bouncer, url = self.start_proxy(self.wurfl_handlers)
+        proxy, url = self.start_proxy(self.wurfl_handlers)
         [handler] = self.wurfl_handlers
         namespace_version = yield handler.get_namespace_version()
         self.assertEqual(namespace_version, '0')
@@ -74,7 +74,7 @@ class WurlfHandlerTestCase(ProxyTestCase):
 
     @inlineCallbacks
     def test_caching_wurfl_check(self):
-        bouncer, url = self.start_proxy(self.wurfl_handlers)
+        proxy, url = self.start_proxy(self.wurfl_handlers)
         [handler] = self.wurfl_handlers
         yield http.request(url, headers={
             'User-Agent': self.iphone_ua,
@@ -95,7 +95,7 @@ class WurlfHandlerTestCase(ProxyTestCase):
 
     @inlineCallbacks
     def test_cache_lifetime(self):
-        bouncer, url = self.start_proxy(self.wurfl_handlers)
+        proxy, url = self.start_proxy(self.wurfl_handlers)
         [handler] = self.wurfl_handlers
         request_path = "some/random/path?true=1"
         response = yield http.request('%s%s' % (url, request_path),
@@ -108,7 +108,7 @@ class WurlfHandlerTestCase(ProxyTestCase):
 
     @inlineCallbacks
     def test_debug_path(self):
-        bouncer, url = self.start_proxy(self.wurfl_handlers)
+        proxy, url = self.start_proxy(self.wurfl_handlers)
         request_path = "_debug"
         response = yield http.request('%s%s' % (url, request_path),
             headers={

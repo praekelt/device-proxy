@@ -9,7 +9,7 @@ from twisted.application import internet
 from twisted.web.server import Site
 from twisted.python import log
 
-from devproxy.bouncer import BounceResource
+from devproxy.proxy import ProxySite
 
 
 class Options(usage.Options):
@@ -21,7 +21,8 @@ class Options(usage.Options):
 class BouncerServiceMaker(object):
     implements(IServiceMaker, IPlugin)
     tapname = "devproxy"
-    description = "Http Request Bouncer, redirects after inspection."
+    description = "Device Proxy. A reverse HTTP Proxy that can inspect and " \
+                    "manipulate HTTP Headers before sending upstream."
     options = Options
 
     def makeService(self, options):
@@ -29,20 +30,9 @@ class BouncerServiceMaker(object):
         with open(config_file, 'r') as fp:
             config = yaml.safe_load(fp)
 
-        handlers = []
-        for handler_config in config['handlers']:
-            [(name, class_path)] = handler_config.items()
-            parts = class_path.split('.')
-            module = '.'.join(parts[:-1])
-            class_name = parts[-1]
-            handler_module = __import__(module, fromlist=[class_name])
-            handler_class = getattr(handler_module, class_name)
-            handler = handler_class(config[name])
-            d = handler.setup_handler()
-            d.addErrback(log.err)
-            handlers.append(d)
+        port = config.pop('port', 8025)
 
-        return internet.TCPServer(int(config['port']),
-            Site(BounceResource(handlers)))
+        return internet.TCPServer(int(port),
+            ProxySite(config))
 
 serviceMaker = BouncerServiceMaker()

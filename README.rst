@@ -1,9 +1,9 @@
-http-request-bouncer
+dev-proxy
 ====================
 
-Inspects incoming HTTP requests adds some HTTP headers and bounces it
-back to HAProxy for rerouting. Useful for things like load balancing specific
-User-Agents to specific HAProxy backends.
+Inspects incoming HTTP requests adds some HTTP headers and proxies upstream.
+Has ability to add extra cookies for HTTP responses being sent back to the
+client.
 
 Installation
 ------------
@@ -18,5 +18,5 @@ Assuming you're living in a virtualenv::
 Running
 -------
 
-    $ twistd hrb --config config.yaml
+    $ twistd dev-proxy --config config.yaml
 

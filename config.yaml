@@ -1,4 +1,6 @@
 port: 8025
+upstream: 127.0.0.1:8000
+
 handlers:
   - wurfl: devproxy.handlers.wurfl_handler.simple.SimpleWurflHandler
 

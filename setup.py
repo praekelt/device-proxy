@@ -5,21 +5,16 @@ def listify(filename):
     return filter(None, open(filename, 'r').read().split('\n'))
 
 setup(
-    name="http-request-bouncer",
+    name="device-proxy",
     version="0.1a",
-    url='http://github.com/smn/http-request-bouncer',
+    url='http://github.com/smn/device-proxy',
     license='BSD',
-    description="Bounce http requests back to a client after setting "
-                "headers & cookies. Useful for User-Agent based backend "
-                "routing with HAProxy",
+    description="Device Proxy. A reverse HTTP Proxy that can inspect and " \
+                "manipulate HTTP Headers before sending upstream.",
     long_description=open('README.rst', 'r').read(),
     author='Praekelt Foundation',
     author_email='dev@praekeltfoundation.org',
-    packages=find_packages() + [
-        # NOTE:2012-01-18: This is commented out for now, pending a fix for
-        # https://github.com/pypa/pip/issues/355
-        #'twisted.plugins',
-    ],
+    packages=find_packages(),
     package_data={'twisted.plugins': ['twisted/plugins/*.py']},
     include_package_data=True,
     install_requires=listify('requirements.pip'),

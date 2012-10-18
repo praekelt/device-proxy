@@ -2,11 +2,30 @@ from urllib import quote as urlquote
 
 from twisted.python import log
 from twisted.internet import defer, reactor
-from twisted.web import proxy, server, http
+from twisted.web import proxy, server, http, resource
 
 
 class ProxyClientFactory(proxy.ProxyClientFactory):
     noisy = False
+
+
+class DebugResource(resource.Resource):
+    isLeaf = True
+
+    def __init__(self, handlers, *args, **kwargs):
+        resource.Resource.__init__(self, *args, **kwargs)
+        self.handlers = handlers
+
+    def render_GET(self, request):
+        self.call_handlers(request)
+        return server.NOT_DONE_YET
+
+    @defer.inlineCallbacks
+    def call_handlers(self, request):
+        for handler in self.handlers:
+            debug_info = yield handler.get_debug_info(request)
+            request.write(debug_info)
+        request.finish()
 
 
 class ReverseProxyResource(proxy.ReverseProxyResource):
@@ -14,12 +33,15 @@ class ReverseProxyResource(proxy.ReverseProxyResource):
     proxyClientFactoryClass = ProxyClientFactory
     encoding = 'utf-8'
 
-    def __init__(self, handlers, *args, **kwargs):
+    def __init__(self, handlers, debug_path, *args, **kwargs):
         proxy.ReverseProxyResource.__init__(self, *args, **kwargs)
+        self.debug_path = debug_path.lstrip('/')
         self.handlers = handlers
 
     def getChild(self, path, request):
-        return ReverseProxyResource(self.handlers, self.host,
+        if self.debug_path and path == self.debug_path:
+            return DebugResource(self.handlers)
+        return ReverseProxyResource(self.handlers, self.debug_path, self.host,
             self.port, self.path + '/' + urlquote(path, safe=""), self.reactor)
 
     def render(self, request):
@@ -74,6 +96,7 @@ class ProxySite(server.Site):
         upstream = config['upstream']
         self.upstream_host, self.upstream_port = upstream.split(':', 1)
         self.path = config.get('path', '')
+        self.debug_path = config.get('debug_path', '')
         self.handlers = handlers
 
     def startFactory(self):
@@ -95,5 +118,5 @@ class ProxySite(server.Site):
             else:
                 raise ProxySiteException(handler.value)
 
-        self.resource = self.resourceClass(started_handlers,
+        self.resource = self.resourceClass(started_handlers, self.debug_path,
             self.upstream_host, int(self.upstream_port), self.path)

@@ -57,3 +57,9 @@ class BaseHandler(object):
         Should return a list of `Cookie` instances.
         """
         raise NotImplementedError('Subclasses should implement this.')
+
+    def get_debug_info(self, request):
+        """
+        Return the debug information for this handler.
+        """
+        return defer.succeed('')

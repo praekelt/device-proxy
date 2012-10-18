@@ -19,7 +19,6 @@ class WurflHandler(BaseHandler):
         self.cache_prefix = config.get('cache_prefix', '')
         self.cache_prefix_delimiter = config.get('cache_prefix_delimiter', '#')
         self.cache_lifetime = int(config.get('cache_lifetime', 0))
-        self.debug_path = config.get('debug_path', None)
         self.memcached_config = config.get('memcached', {})
 
     @inlineCallbacks
@@ -80,14 +79,6 @@ class WurflHandler(BaseHandler):
         return succeed([])
 
     @inlineCallbacks
-    def get_body(self, request):
-        user_agent = unicode(request.getHeader('User-Agent') or '')
-        if request.path == self.debug_path:
-            device = self.devices.select_ua(user_agent, search=self.algorithm)
-            body = yield self.debug_device(request, device)
-            returnValue(body)
-
-    @inlineCallbacks
     def handle_request_and_cache(self, cache_key, user_agent, request):
         device = self.devices.select_ua(user_agent, search=self.algorithm)
         headers = self.handle_device(request, device)
@@ -96,8 +87,6 @@ class WurflHandler(BaseHandler):
         returnValue(headers)
 
     def handle_request_from_cache(self, cached, request):
-        # JSON returns everything as unicode which Twisted isn't too happy
-        # with, encode to utf8 bytestring instead.
         return json.loads(cached)
 
     def get_cache_key(self, key):
@@ -107,7 +96,9 @@ class WurflHandler(BaseHandler):
             hashlib.md5(key).hexdigest()
         ])
 
-    def debug_device(self, request, device):
+    def get_debug_info(self, request):
+        user_agent = unicode(request.getHeader('User-Agent') or '')
+        device = self.devices.select_ua(user_agent, search=self.algorithm)
         return flattenString(None, debug.DebugElement(device))
 
     def handle_device(self, request, device):

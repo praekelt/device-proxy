@@ -2,7 +2,8 @@ from twisted.internet import defer
 from twisted.internet.defer import inlineCallbacks
 
 from devproxy.utils import http
-from devproxy.tests.utils import HeaderHandler, CookieHandler, ProxyTestCase
+from devproxy.tests.utils import (HeaderHandler, CookieHandler, DebugHandler,
+                                    ProxyTestCase)
 from devproxy.handlers.base import Cookie
 
 
@@ -19,6 +20,11 @@ class ProxyTestCase(ProxyTestCase):
         self.cookie_handlers = yield self.start_handlers(map(CookieHandler, [
             lambda request: defer.succeed([Cookie('Type', 'Chocolate Chip')]),
             lambda request: defer.succeed([Cookie('Delicious', 'Definitely')]),
+            ]))
+
+        self.debug_handlers = yield self.start_handlers(map(DebugHandler, [
+            lambda request: defer.succeed('debugfoo'),
+            lambda request: defer.succeed('debugbar'),
             ]))
 
     @inlineCallbacks
@@ -42,3 +48,10 @@ class ProxyTestCase(ProxyTestCase):
         self.assertTrue(resp.headers.hasHeader('Set-Cookie'))
         self.assertEqual(resp.headers.getRawHeaders('Set-Cookie'), [
             'Type=Chocolate Chip', 'Delicious=Definitely'])
+
+    @inlineCallbacks
+    def test_debug_info(self):
+        proxy, url = self.start_proxy(self.debug_handlers)
+        resp = yield http.request('%s/_debug' % (url,), method='GET')
+        self.assertTrue('debugfoo' in resp.delivered_body)
+        self.assertTrue('debugbar' in resp.delivered_body)

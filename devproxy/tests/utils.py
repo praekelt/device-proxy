@@ -51,11 +51,9 @@ class ProxyTestCase(TestCase):
 
 
 class TestHandler(BaseHandler):
-    def __init__(self, header_callback=None, body_callback=None,
-                    cookie_callback=None):
+    def __init__(self, header_callback=None, cookie_callback=None):
         noop = lambda _: None
         self.header_callback = header_callback or noop
-        self.body_callback = body_callback or noop
         self.cookie_callback = cookie_callback or noop
 
     def setup_handler(self):
@@ -69,11 +67,18 @@ class TestHandler(BaseHandler):
     def get_headers(self, request):
         return self.header_callback(request)
 
-    def get_body(self, request):
-        return self.body_callback(request)
-
     def get_cookies(self, request):
         return self.cookie_callback(request)
+
+
+class HeaderHandler(TestHandler):
+    def __init__(self, callback):
+        super(HeaderHandler, self).__init__(header_callback=callback)
+
+
+class CookieHandler(TestHandler):
+    def __init__(self, callback):
+        super(CookieHandler, self).__init__(cookie_callback=callback)
 
 
 class FakeMemcached(object):

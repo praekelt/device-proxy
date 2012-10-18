@@ -113,5 +113,5 @@ class WurlfHandlerTestCase(ProxyTestCase):
         response = yield http.request('%s%s' % (url, request_path),
             headers={
                 'User-Agent': self.iphone_ua,
-            })
+            }, method='GET')
         self.assertEqual(response.code, 200)

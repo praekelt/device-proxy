@@ -1,7 +1,8 @@
 port: 8025
-upstream: 127.0.0.1:8000
+upstream: 127.0.0.1:8026
 # Path to hit to get debug from each of the handlers.
 debug_path: /_debug
+health_path: /health
 
 handlers:
   - wurfl: devproxy.handlers.wurfl_handler.simple.SimpleWurflHandler

@@ -1,3 +1,4 @@
+import urlparse
 from urllib import quote as urlquote
 
 from twisted.python import log
@@ -28,21 +29,33 @@ class DebugResource(resource.Resource):
         request.finish()
 
 
+class HealthResource(resource.Resource):
+    isLeaf = True
+
+    def render_GET(self, request):
+        return 'OK'
+
+
 class ReverseProxyResource(proxy.ReverseProxyResource):
 
     proxyClientFactoryClass = ProxyClientFactory
     encoding = 'utf-8'
 
-    def __init__(self, handlers, debug_path, *args, **kwargs):
+    def __init__(self, handlers, debug_path, health_path, *args, **kwargs):
         proxy.ReverseProxyResource.__init__(self, *args, **kwargs)
         self.debug_path = debug_path.lstrip('/')
+        self.health_path = health_path.lstrip('/')
         self.handlers = handlers
 
     def getChild(self, path, request):
         if self.debug_path and path == self.debug_path:
             return DebugResource(self.handlers)
-        return ReverseProxyResource(self.handlers, self.debug_path, self.host,
-            self.port, self.path + '/' + urlquote(path, safe=""), self.reactor)
+        if self.health_path and path == self.health_path:
+            return HealthResource()
+
+        return ReverseProxyResource(self.handlers, self.debug_path,
+            self.health_path, self.host, self.port,
+            self.path + '/' + urlquote(path, safe=""), self.reactor)
 
     def render(self, request):
         self.call_handlers(request)
@@ -61,8 +74,21 @@ class ReverseProxyResource(proxy.ReverseProxyResource):
             for cookie in cookies:
                 request.addCookie(cookie.key, cookie.value,
                     **cookie.get_params())
+        self.connect_upstream(request)
 
-        proxy.ReverseProxyResource.render(self, request)
+    def connect_upstream(self, request):
+        """
+        Render a request by forwarding it to the proxied server.
+        """
+        qs = urlparse.urlparse(request.uri)[4]
+        if qs:
+            rest = self.path + '?' + qs
+        else:
+            rest = self.path
+        clientFactory = self.proxyClientFactoryClass(
+            request.method, rest, request.clientproto,
+            request.getAllHeaders(), request.content.read(), request)
+        self.reactor.connectTCP(self.host, self.port, clientFactory)
 
 
 class ProxySiteException(Exception):
@@ -97,6 +123,7 @@ class ProxySite(server.Site):
         self.upstream_host, self.upstream_port = upstream.split(':', 1)
         self.path = config.get('path', '')
         self.debug_path = config.get('debug_path', '')
+        self.health_path = config.get('health_path', '')
         self.handlers = handlers
 
     def startFactory(self):
@@ -119,4 +146,5 @@ class ProxySite(server.Site):
                 raise ProxySiteException(handler.value)
 
         self.resource = self.resourceClass(started_handlers, self.debug_path,
-            self.upstream_host, int(self.upstream_port), self.path)
+            self.health_path, self.upstream_host, int(self.upstream_port),
+            self.path)

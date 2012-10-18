@@ -4,7 +4,7 @@ from twisted.internet.defer import inlineCallbacks
 
 from devproxy.handlers.wurfl_handler.simple import SimpleWurflHandler
 from devproxy.utils import http
-from tests.utils import FakeMemcached, ProxyTestCase
+from devproxy.tests.utils import FakeMemcached, ProxyTestCase
 
 
 class WurlfHandlerTestCase(ProxyTestCase):

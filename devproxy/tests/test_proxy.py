@@ -2,7 +2,7 @@ from twisted.internet import defer
 from twisted.internet.defer import inlineCallbacks
 
 from devproxy.utils import http
-from tests.utils import TestHandler, ProxyTestCase
+from devproxy.tests.utils import TestHandler, ProxyTestCase
 
 
 class ProxyTestCase(ProxyTestCase):

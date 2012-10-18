@@ -1,4 +1,4 @@
-from hrb.handlers.wurfl_handler.base import WurflHandler
+from devproxy.handlers.wurfl_handler.base import WurflHandler
 
 
 class SimpleWurflHandler(WurflHandler):

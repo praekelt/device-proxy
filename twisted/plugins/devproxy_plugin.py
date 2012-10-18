@@ -9,7 +9,7 @@ from twisted.application import internet
 from twisted.web.server import Site
 from twisted.python import log
 
-from hrb.bouncer import BounceResource
+from devproxy.bouncer import BounceResource
 
 
 class Options(usage.Options):
@@ -20,7 +20,7 @@ class Options(usage.Options):
 
 class BouncerServiceMaker(object):
     implements(IServiceMaker, IPlugin)
-    tapname = "hrb"
+    tapname = "devproxy"
     description = "Http Request Bouncer, redirects after inspection."
     options = Options
 

@@ -6,9 +6,9 @@ from twisted.internet.defer import (inlineCallbacks, returnValue, Deferred,
                                     succeed)
 from twisted.web.server import Site
 
-from hrb.bouncer import BounceResource
-from hrb.handlers.wurfl_handler.simple import SimpleWurflHandler
-from hrb.utils import http
+from devproxy.bouncer import BounceResource
+from devproxy.handlers.wurfl_handler.simple import SimpleWurflHandler
+from devproxy.utils import http
 from tests.utils import TestHandler, FakeMemcached, HRBTestCase, MockHttpServer
 
 

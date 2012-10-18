@@ -1,7 +1,7 @@
 from twisted.internet import defer
 from twisted.internet.defer import inlineCallbacks
 
-from hrb.utils import http
+from devproxy.utils import http
 from tests.utils import TestHandler, HRBTestCase
 
 

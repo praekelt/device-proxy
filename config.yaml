@@ -1,10 +1,10 @@
 port: 8025
 handlers:
-  - wurfl: hrb.handlers.wurfl_handler.simple.SimpleWurflHandler
+  - wurfl: devproxy.handlers.wurfl_handler.simple.SimpleWurflHandler
 
 wurfl:
   # All keys in Memcached are prefixed with this
-  cache_prefix: hrb
+  cache_prefix: devproxy
   cache_lifetime: 100   # defaults to 0, which means it won't expire unless
                         # memcached decides to delete the key based on its
                         # least-recently-used counters when memory fills up.

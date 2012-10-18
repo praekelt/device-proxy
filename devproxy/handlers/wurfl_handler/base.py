@@ -9,9 +9,9 @@ from twisted.python import log
 
 from pywurfl.algorithms import TwoStepAnalysis
 
-from hrb.handlers.base import BaseHandler
-from hrb.handlers.wurfl_handler import wurfl_devices
-from hrb.handlers.wurfl_handler import debug
+from devproxy.handlers.base import BaseHandler
+from devproxy.handlers.wurfl_handler import wurfl_devices
+from devproxy.handlers.wurfl_handler import debug
 
 
 class WurflHandler(BaseHandler):

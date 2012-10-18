@@ -1,5 +1,5 @@
-from hrb.handlers.base import BaseHandler
-from hrb.proxy import ReverseProxyResource
+from devproxy.handlers.base import BaseHandler
+from devproxy.proxy import ReverseProxyResource
 
 from twisted.trial.unittest import TestCase
 from twisted.internet import defer, reactor

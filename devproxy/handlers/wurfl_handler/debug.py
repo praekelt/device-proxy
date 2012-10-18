@@ -4,7 +4,7 @@ from pywurfl import RootDevice
 
 
 class DebugElement(Element):
-    loader = XMLFile(FilePath('hrb/templates/debug.xml'))
+    loader = XMLFile(FilePath('devproxy/templates/debug.xml'))
 
     def __init__(self, device, loader=None):
         self.device = device

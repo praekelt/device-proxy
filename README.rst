@@ -18,5 +18,5 @@ Assuming you're living in a virtualenv::
 Running
 -------
 
-    $ twistd dev-proxy --config config.yaml
+    $ twistd -n devproxy --config config.yaml
 

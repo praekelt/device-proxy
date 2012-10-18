@@ -41,7 +41,7 @@ class BaseHandler(object):
     def teardown_handler(self):
         pass
 
-    def get_headers(self):
+    def get_headers(self, request):
         """
         Generate the headers that are to be inserted before proxying upstream
 
@@ -49,7 +49,7 @@ class BaseHandler(object):
         """
         raise NotImplementedError('Subclasses should implement this.')
 
-    def get_cookies(self):
+    def get_cookies(self, request):
         """
         Generate the a list of cookies that are to be inserted before returning
         the upstream response back to the client.

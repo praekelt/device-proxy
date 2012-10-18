@@ -1,7 +1,7 @@
 import hashlib
 import json
 
-from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.internet.defer import inlineCallbacks, returnValue, succeed
 from twisted.internet import protocol, reactor
 from twisted.protocols.memcache import MemCacheProtocol, DEFAULT_PORT
 from twisted.web.template import flattenString
@@ -80,6 +80,9 @@ class WurflHandler(BaseHandler):
             headers = yield self.handle_request_and_cache(cache_key,
                 user_agent, request)
         returnValue(headers)
+
+    def get_cookies(self, request):
+        return succeed([])
 
     @inlineCallbacks
     def get_body(self, request):

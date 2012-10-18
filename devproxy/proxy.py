@@ -24,13 +24,13 @@ class ReverseProxyResource(proxy.ReverseProxyResource):
     @defer.inlineCallbacks
     def call_handlers(self, request):
         for handler in self.handlers:
-            headers = (yield handler.get_headers(request)) or {}
+            headers = (yield handler.get_headers(request)) or []
             for header in headers:
-                for key, value in headers.items():
+                for key, value in header.items():
                     request.requestHeaders.addRawHeader(
                         key.encode(self.encoding), value.encode(self.encoding))
 
-            cookies = (yield handler.get_cookies(request)) or {}
+            cookies = (yield handler.get_cookies(request)) or []
             for cookie in cookies:
                 request.addCookie(cookie.key, cookie.value,
                     **cookie.get_params())

@@ -7,7 +7,7 @@ from twisted.web.resource import Resource
 from twisted.web.server import Site
 
 
-class HRBTestCase(TestCase):
+class ProxyTestCase(TestCase):
 
     timeout = 1
     nokia_ua = 'Nokia3100/1.0 (02.70) Profile/MIDP-1.0 ' \

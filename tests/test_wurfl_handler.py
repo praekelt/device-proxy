@@ -4,10 +4,10 @@ from twisted.internet.defer import inlineCallbacks
 
 from devproxy.handlers.wurfl_handler.simple import SimpleWurflHandler
 from devproxy.utils import http
-from tests.utils import FakeMemcached, HRBTestCase
+from tests.utils import FakeMemcached, ProxyTestCase
 
 
-class WurlfHandlerTestCase(HRBTestCase):
+class WurlfHandlerTestCase(ProxyTestCase):
 
     @inlineCallbacks
     def setUp(self):

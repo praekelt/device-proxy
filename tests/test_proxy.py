@@ -2,10 +2,10 @@ from twisted.internet import defer
 from twisted.internet.defer import inlineCallbacks
 
 from devproxy.utils import http
-from tests.utils import TestHandler, HRBTestCase
+from tests.utils import TestHandler, ProxyTestCase
 
 
-class ProxyTestCase(HRBTestCase):
+class ProxyTestCase(ProxyTestCase):
 
     @inlineCallbacks
     def setUp(self):

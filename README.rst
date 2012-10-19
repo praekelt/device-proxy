@@ -28,10 +28,15 @@ Configuration
 
 This is what the processing chain looks like::
 
-    (1) HAProxy -> (2) *n* DeviceProxies -> (3) HAProxy -> (4) Backend App
-           |                                                    ^
-           | (if cookie set)                                    |
-           +----------------------------------------------------+
+           +------------------+
+           |                  |
+           |           Header & Cookie set
+           v                  |
+    (1) HAProxy -> (2) *n* DeviceProxies
+           |
+          (3)
+           | (if Cookie or Header set)
+           +--------------------------------> (4) *n* Backend Apps
 
 1. Haproxy receives incoming traffic from Nginx
 2. Request is passed to *n* number of Device Proxies running.
@@ -40,9 +45,10 @@ This is what the processing chain looks like::
    which can cache the Device Lookup (for subsequent requests HAProxy (1)
    could use these cookie values to skip DeviceProxy completely for the
    lifetime of the Cookie.)
-   DeviceProxy redirects back to HAProxy with HTTP headers inserted.
-3. HAProxy inspects the HTTP headers received and selects appropriate backend
-   application for the request. HAProxy can have a default fallback backend.
+   DeviceProxy reverse proxies back to HAProxy with HTTP headers inserted.
+3. HAProxy inspects the HTTP headers & cookies received and selects appropriate
+   backend application for the request. HAProxy can have a default fallback
+   backend. If the Cookie is already set then the DeviceProxies are skipped.
 4. The Backend application renders the request with a template set suitable for
    the given HTTP request.
 

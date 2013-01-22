@@ -6,7 +6,7 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.web.client import getPage
 
 
-class SMCloudWurflHandler(WurflHandler):
+class SMCloudHandler(WurflHandler):
 
     SMCLOUD_CONFIG = {
         'url': 'http://api.wurflcloud.com/v1/json/',
@@ -16,9 +16,10 @@ class SMCloudWurflHandler(WurflHandler):
     def validate_config(self, config):
         # The parent methods configures cache as well as the name where
         # the upstream headers should be stored.
-        super(SMCloudWurflHandler, self).validate_config(config)
-        # the api key is required, should I raise an exception to say so?
+        super(SMCloudHandler, self).validate_config(config)
         self.smcloud_api_key = config.get('smcloud_api_key')
+        if not self.smcloud_api_key:
+            raise Exception('smcloud_api_key config option is required')
 
     @inlineCallbacks
     def setup_handler(self):
@@ -53,11 +54,7 @@ class SMCloudWurflHandler(WurflHandler):
         returnValue(device)
 
     def handle_device(self, request, device):
-        #raise NotImplementedError("Subclasses should implement this")
-        if device['id'] == 'apple_iphone_ver2_2_1':
-            return [{self.header_name: 'high'}]
-        else:
-            return [{self.header_name: 'medium'}]
+        raise NotImplementedError("Subclasses should implement this")
 
     def get_debug_info(self, request):
         user_agent = unicode(request.getHeader('User-Agent') or '')

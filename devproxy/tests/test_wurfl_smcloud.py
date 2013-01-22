@@ -2,7 +2,7 @@ import hashlib
 
 from twisted.internet.defer import inlineCallbacks
 
-from devproxy.handlers.wurfl_handler.smcloud import SMCloudWurflHandler
+from devproxy.handlers.wurfl_handler.smcloud_simple import SimpleSMCloudHandler
 from devproxy.utils import http
 from devproxy.tests.utils import FakeMemcached, ProxyTestCase
 
@@ -13,10 +13,10 @@ class WurlfHandlerTestCase(ProxyTestCase):
     def setUp(self):
         yield super(WurlfHandlerTestCase, self).setUp()
         self.fake_memcached = FakeMemcached()
-        self.patch(SMCloudWurflHandler, 'connect_to_memcached',
+        self.patch(SimpleSMCloudHandler, 'connect_to_memcached',
             self.patch_memcached)
 
-        self.wurfl_handlers = yield self.start_handlers([SMCloudWurflHandler({
+        self.wurfl_handlers = yield self.start_handlers([SimpleSMCloudHandler({
             'header_name': 'X-UA-header',
             'cache_prefix': 'prefix',
             'cache_prefix_delimiter': '_',

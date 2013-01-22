@@ -56,7 +56,3 @@ class SMCloudHandler(WurflHandler):
     def handle_device(self, request, device):
         raise NotImplementedError("Subclasses should implement this")
 
-    def get_debug_info(self, request):
-        user_agent = unicode(request.getHeader('User-Agent') or '')
-        device = get_device_from_smcloud(user_agent)
-        return flattenString(None, debug.DebugElement(device))

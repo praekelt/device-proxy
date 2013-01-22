@@ -22,7 +22,7 @@ class WurlfHandlerTestCase(ProxyTestCase):
             'cache_prefix_delimiter': '_',
             'cache_lifetime': 100,
             'debug_path': '/_debug',
-            'smcloud_api_key': '',
+            'smcloud_api_key': '904899:Ot76lgzsQTPAXVWSvqdDUjIwaufh4i32',
             'smcloud_capabilities': []
         })])
 
@@ -107,13 +107,3 @@ class WurlfHandlerTestCase(ProxyTestCase):
         self.assertEqual(response.delivered_body, 'foo')
         cache_key = handler.get_cache_key(self.iphone_ua)
         self.assertEqual(self.fake_memcached.key_lifetime(cache_key), 100)
-
-    # @inlineCallbacks
-    # def test_debug_path(self):
-    #     proxy, url = self.start_proxy(self.wurfl_handlers)
-    #     request_path = "/_debug"
-    #     response = yield http.request('%s%s' % (url, request_path),
-    #         headers={
-    #             'User-Agent': self.iphone_ua,
-    #         }, method='GET')
-    #     self.assertEqual(response.code, 200)

@@ -19,7 +19,7 @@ class SMCloudWurflHandler(WurflHandler):
         super(SMCloudWurflHandler, self).validate_config(config)
         # the api key is required, should I raise an exception to say so?
         self.smcloud_api_key = config.get('smcloud_api_key')
-        self.smcloud_capabilities = config.get('smcloud_capabilities', [])
+        self.smcloud_capabilities = config.get('smcloud_capabilities')
 
     @inlineCallbacks
     def setup_handler(self):

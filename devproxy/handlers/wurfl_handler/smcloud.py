@@ -43,7 +43,7 @@ class SMCloudWurflHandler(WurflHandler):
         # create basic auth string
         b64 = base64.encodestring(self.smcloud_api_key).strip()
         headers = {
-            'User-Agent': user_agent,
+            #User-Agent is set by agent in getPage.
             'X-Cloud-Client': self.SMCLOUD_CONFIG['client_version'],
             'Authorization': 'Basic %s' % b64
         }

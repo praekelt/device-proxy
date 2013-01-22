@@ -10,7 +10,7 @@ class SMCloudWurflHandler(WurflHandler):
 
     SMCLOUD_CONFIG = {
         'url': 'http://api.wurflcloud.com/v1/json/',
-        'client_version': 'WurflCloud_Client/Python_1.0.0'
+        'client_version': 'Device-Proxy/0.1'
     }
 
     def validate_config(self, config):

@@ -1,4 +1,5 @@
-from devproxy.handlers.wurfl_handler.scientia_mobile_cloud import ScientiaMobileCloudHandler
+from devproxy.handlers.wurfl_handler.scientia_mobile_cloud \
+    import ScientiaMobileCloudHandler
 
 
 class ScientiaMobileCloudResolutionHandler(ScientiaMobileCloudHandler):

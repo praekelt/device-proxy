@@ -18,8 +18,6 @@ class ScientiaMobileCloudHandler(WurflHandler):
         # the upstream headers should be stored.
         super(ScientiaMobileCloudHandler, self).validate_config(config)
         # raise a warning about caching for longer than 24 hours.
-        
-
         self.smcloud_api_key = config.get('smcloud_api_key')
         if self.smcloud_api_key is None:
             raise Exception('smcloud_api_key config option is required')
@@ -58,4 +56,3 @@ class ScientiaMobileCloudHandler(WurflHandler):
 
     def handle_device(self, request, device):
         raise NotImplementedError("Subclasses should implement this")
-

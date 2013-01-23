@@ -2,7 +2,7 @@ import hashlib
 
 from twisted.internet.defer import inlineCallbacks
 
-from devproxy.handlers.wurfl_handler.smcloud_simple import SimpleSMCloudHandler
+from devproxy.handlers.wurfl_handler.scientia_mobile_cloud_resolution import ScientiaMobileCloudResolutionHandler
 from devproxy.utils import http
 from devproxy.tests.utils import FakeMemcached, ProxyTestCase
 
@@ -13,18 +13,20 @@ class WurlfHandlerTestCase(ProxyTestCase):
     def setUp(self):
         yield super(WurlfHandlerTestCase, self).setUp()
         self.fake_memcached = FakeMemcached()
-        self.patch(SimpleSMCloudHandler, 'connect_to_memcached',
+        self.patch(ScientiaMobileCloudResolutionHandler, 'connect_to_memcached',
             self.patch_memcached)
 
-        self.wurfl_handlers = yield self.start_handlers([SimpleSMCloudHandler({
-            'header_name': 'X-UA-header',
-            'cache_prefix': 'prefix',
-            'cache_prefix_delimiter': '_',
-            'cache_lifetime': 100,
-            'debug_path': '/_debug',
-            'smcloud_api_key': '904899:Ot76lgzsQTPAXVWSvqdDUjIwaufh4i32',
-            'smcloud_capabilities': []
-        })])
+        self.wurfl_handlers = yield self.start_handlers([
+            ScientiaMobileCloudResolutionHandler({
+                'header_name': 'X-UA-header',
+                'cache_prefix': 'prefix',
+                'cache_prefix_delimiter': '_',
+                'cache_lifetime': 100,
+                'debug_path': '/_debug',
+                'smcloud_api_key': '904899:Ot76lgzsQTPAXVWSvqdDUjIwaufh4i32',
+                'smcloud_capabilities': []
+            })
+        ])
 
     def patch_memcached(self, **config):
         return self.fake_memcached

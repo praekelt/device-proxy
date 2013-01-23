@@ -6,7 +6,7 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.web.client import getPage
 
 
-class SMCloudHandler(WurflHandler):
+class ScientiaMobileCloudHandler(WurflHandler):
 
     SMCLOUD_CONFIG = {
         'url': 'http://api.wurflcloud.com/v1/json/',
@@ -16,7 +16,10 @@ class SMCloudHandler(WurflHandler):
     def validate_config(self, config):
         # The parent methods configures cache as well as the name where
         # the upstream headers should be stored.
-        super(SMCloudHandler, self).validate_config(config)
+        super(ScientiaMobileCloudHandler, self).validate_config(config)
+        # raise a warning about caching for longer than 24 hours.
+        
+
         self.smcloud_api_key = config.get('smcloud_api_key')
         if self.smcloud_api_key is None:
             raise Exception('smcloud_api_key config option is required')

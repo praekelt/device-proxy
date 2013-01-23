@@ -1,5 +1,6 @@
 import base64
 import json
+import warnings
 
 from devproxy.handlers.wurfl_handler.base import WurflHandler
 from twisted.internet.defer import inlineCallbacks, returnValue
@@ -17,7 +18,9 @@ class ScientiaMobileCloudHandler(WurflHandler):
         # The parent methods configures cache as well as the name where
         # the upstream headers should be stored.
         super(ScientiaMobileCloudHandler, self).validate_config(config)
-        # raise a warning about caching for longer than 24 hours.
+        if self.cache_lifetime > 86400:
+            warnings.warn('Caching for more than 24 hours is against \
+                           Scientia Mobiles terms of service.')
         self.smcloud_api_key = config.get('smcloud_api_key')
         if self.smcloud_api_key is None:
             raise Exception('smcloud_api_key config option is required')
@@ -34,7 +37,7 @@ class ScientiaMobileCloudHandler(WurflHandler):
         device = yield self.get_device_from_smcloud(user_agent)
         headers = self.handle_device(request, device)
         yield self.memcached.set(cache_key, json.dumps(headers),
-            expireTime=self.cache_lifetime)
+                                 expireTime=self.cache_lifetime)
         returnValue(headers)
 
     @inlineCallbacks

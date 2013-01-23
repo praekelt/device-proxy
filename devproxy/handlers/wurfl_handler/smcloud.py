@@ -18,7 +18,7 @@ class SMCloudHandler(WurflHandler):
         # the upstream headers should be stored.
         super(SMCloudHandler, self).validate_config(config)
         self.smcloud_api_key = config.get('smcloud_api_key')
-        if not self.smcloud_api_key:
+        if self.smcloud_api_key is None:
             raise Exception('smcloud_api_key config option is required')
 
     @inlineCallbacks

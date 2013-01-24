@@ -1,0 +1,6 @@
+include config.yaml
+include get-wurfl-2.1-db.sh
+include haproxy.cfg
+include README.rst
+include twisted/plugins/devproxy_plugin.py
+exclude devproxy/handlers/wurfl_handler/wurfl_devices.py

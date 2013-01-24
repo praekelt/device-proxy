@@ -1,6 +1,6 @@
 import hashlib
 
-from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import inlineCallbacks, succeed
 
 from devproxy.handlers.wurfl_handler.scientia_mobile_cloud_resolution \
     import ScientiaMobileCloudResolutionHandler
@@ -14,6 +14,10 @@ class WurlfHandlerTestCase(ProxyTestCase):
     def setUp(self):
         yield super(WurlfHandlerTestCase, self).setUp()
         self.fake_memcached = FakeMemcached()
+        self._mocked_devices = {}
+        self.patch(ScientiaMobileCloudResolutionHandler,
+                    'get_device_from_smcloud',
+                    self.patch_get_device_from_smcloud)
         self.patch(ScientiaMobileCloudResolutionHandler,
                    'connect_to_memcached',
                    self.patch_memcached)
@@ -28,6 +32,24 @@ class WurlfHandlerTestCase(ProxyTestCase):
                 'smcloud_capabilities': []
             })
         ])
+
+        self.mock_response(self.nokia_ua, {
+            'capabilities': {
+                'resolution_width': 200,
+            },
+        })
+
+        self.mock_response(self.iphone_ua, {
+            'capabilities': {
+                'resolution_width': 500,
+            },
+        })
+
+    def mock_response(self, user_agent, json_device):
+        self._mocked_devices[user_agent] = json_device
+
+    def patch_get_device_from_smcloud(self, user_agent):
+        return succeed(self._mocked_devices.get(user_agent, {}))
 
     def patch_memcached(self, **config):
         return self.fake_memcached

@@ -24,7 +24,7 @@ class WurlfHandlerTestCase(ProxyTestCase):
                 'cache_prefix_delimiter': '_',
                 'cache_lifetime': 100,
                 'debug_path': '/_debug',
-                'smcloud_api_key': '904899:Ot76lgzsQTPAXVWSvqdDUjIwaufh4i32',
+                'smcloud_api_key': '[INSERT KEY HERE]',
                 'smcloud_capabilities': []
             })
         ])

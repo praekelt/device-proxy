@@ -25,3 +25,11 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
+/ve/
+wurfl-2.1.zip
+wurfl.xml
+wurfl_devices.py
+/_trial_temp/
+*.log
+dropin.cache
+*.pid

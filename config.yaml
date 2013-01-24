@@ -1,0 +1,19 @@
+port: 8025
+upstream: 127.0.0.1:8026
+# Path to hit to get debug from each of the handlers.
+debug_path: /_debug
+health_path: /health
+
+handlers:
+  - wurfl: devproxy.handlers.wurfl_handler.simple.SimpleWurflHandler
+
+wurfl:
+  # All keys in Memcached are prefixed with this
+  cache_prefix: devproxy
+  cache_lifetime: 100   # defaults to 0, which means it won't expire unless
+                        # memcached decides to delete the key based on its
+                        # least-recently-used counters when memory fills up.
+  # Connect to Memcached with the following parameters
+  memcached:
+    host: localhost
+    port: 11211

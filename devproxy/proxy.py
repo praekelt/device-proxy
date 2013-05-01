@@ -1,5 +1,6 @@
 import urlparse
 from urllib import quote as urlquote
+from functools import partial
 
 from twisted.python import log
 from twisted.internet import defer, reactor
@@ -64,10 +65,6 @@ class ReverseProxyResource(proxy.ReverseProxyResource):
 
     @defer.inlineCallbacks
     def call_handlers(self, request):
-
-        done = request.notifyFinish()
-        done.addBoth(self.cleanup_request)
-
         for handler in self.handlers:
             headers = (yield handler.get_headers(request)) or []
             for header in headers:
@@ -81,10 +78,6 @@ class ReverseProxyResource(proxy.ReverseProxyResource):
                                   **cookie.get_params())
         self.connect_upstream(request)
 
-    def cleanup_request(self, err):
-        if not (err is None or err.trap(ConnectionDone)):
-            log.error(err)
-
     def connect_upstream(self, request):
         """
         Render a request by forwarding it to the proxied server.
@@ -97,7 +90,16 @@ class ReverseProxyResource(proxy.ReverseProxyResource):
         clientFactory = self.proxyClientFactoryClass(
             request.method, rest, request.clientproto,
             request.getAllHeaders(), request.content.read(), request)
-        self.reactor.connectTCP(self.host, self.port, clientFactory)
+        connector = self.reactor.connectTCP(self.host, self.port,
+                                            clientFactory)
+
+        done = request.notifyFinish()
+        done.addBoth(partial(self.cleanup_connection, request, connector))
+
+    def cleanup_connection(self, request, connector, err):
+        if not (err is None or err.trap(ConnectionDone)):
+            log.err(err.getErrorMessage())
+            connector.close()
 
 
 class ProxySiteException(Exception):

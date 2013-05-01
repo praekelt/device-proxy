@@ -3,6 +3,7 @@ from urllib import quote as urlquote
 
 from twisted.python import log
 from twisted.internet import defer, reactor
+from twisted.internet.error import ConnectionDone
 from twisted.web import proxy, server, http, resource
 
 
@@ -53,7 +54,8 @@ class ReverseProxyResource(proxy.ReverseProxyResource):
         if self.health_path and path == self.health_path:
             return HealthResource()
 
-        return ReverseProxyResource(self.handlers, '', '', self.host,
+        return ReverseProxyResource(
+            self.handlers, '', '', self.host,
             self.port, self.path + '/' + urlquote(path, safe=""), self.reactor)
 
     def render(self, request):
@@ -62,6 +64,10 @@ class ReverseProxyResource(proxy.ReverseProxyResource):
 
     @defer.inlineCallbacks
     def call_handlers(self, request):
+
+        done = request.notifyFinish()
+        done.addBoth(self.cleanup_request)
+
         for handler in self.handlers:
             headers = (yield handler.get_headers(request)) or []
             for header in headers:
@@ -72,8 +78,12 @@ class ReverseProxyResource(proxy.ReverseProxyResource):
             cookies = (yield handler.get_cookies(request)) or []
             for cookie in cookies:
                 request.addCookie(cookie.key, cookie.value,
-                    **cookie.get_params())
+                                  **cookie.get_params())
         self.connect_upstream(request)
+
+    def cleanup_request(self, err):
+        if not (err is None or err.trap(ConnectionDone)):
+            log.error(err)
 
     def connect_upstream(self, request):
         """
@@ -144,6 +154,7 @@ class ProxySite(server.Site):
             else:
                 raise ProxySiteException(handler.value)
 
-        self.resource = self.resourceClass(started_handlers, self.debug_path,
+        self.resource = self.resourceClass(
+            started_handlers, self.debug_path,
             self.health_path, self.upstream_host, int(self.upstream_port),
             self.path)

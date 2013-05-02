@@ -1,9 +1,12 @@
-from twisted.internet import defer
+from twisted.internet import defer, reactor
 from twisted.internet.defer import inlineCallbacks
+from twisted.web.client import Agent, getPage
+from twisted.web.server import NOT_DONE_YET
+from twisted.python import log
 
 from devproxy.utils import http
 from devproxy.tests.utils import (HeaderHandler, CookieHandler, DebugHandler,
-                                    ProxyTestCase)
+                                  ProxyTestCase)
 from devproxy.handlers.base import Cookie
 
 
@@ -15,17 +18,17 @@ class ProxyTestCase(ProxyTestCase):
         self.header_handlers = yield self.start_handlers(map(HeaderHandler, [
             lambda request: defer.succeed([{'X-UA-Type': 'small'}]),
             lambda request: defer.succeed([{'X-UA-Category': 'mobi'}]),
-            ]))
+        ]))
 
         self.cookie_handlers = yield self.start_handlers(map(CookieHandler, [
             lambda request: defer.succeed([Cookie('Type', 'Chocolate Chip')]),
             lambda request: defer.succeed([Cookie('Delicious', 'Definitely')]),
-            ]))
+        ]))
 
         self.debug_handlers = yield self.start_handlers(map(DebugHandler, [
             lambda request: defer.succeed('debugfoo'),
             lambda request: defer.succeed('debugbar'),
-            ]))
+        ]))
 
     @inlineCallbacks
     def test_setting_header(self):
@@ -34,9 +37,9 @@ class ProxyTestCase(ProxyTestCase):
         self.assertEqual(resp.delivered_body, 'foo')
         req = yield self.mocked_backend.queue.get()
         self.assertEqual(req.requestHeaders.getRawHeaders('x-ua-type'),
-            ['small'])
+                         ['small'])
         self.assertEqual(req.requestHeaders.getRawHeaders('x-ua-category'),
-            ['mobi'])
+                         ['mobi'])
 
     @inlineCallbacks
     def test_setting_cookie(self):
@@ -55,3 +58,23 @@ class ProxyTestCase(ProxyTestCase):
         resp = yield http.request('%s/_debug' % (url,), method='GET')
         self.assertTrue('debugfoo' in resp.delivered_body)
         self.assertTrue('debugbar' in resp.delivered_body)
+
+    # @inlineCallbacks
+    def test_client_disappearing(self):
+        # this means the backend never returns
+        requests = []
+
+        def slow_handler(request):
+            requests.append(request)
+            return NOT_DONE_YET
+
+        self.mocked_backend.set_handler(slow_handler)
+        proxy, url = self.start_proxy(self.header_handlers)
+
+        resp = getPage(url, timeout=0.01)
+
+        def handle_timeout(err):
+            err.trap(defer.TimeoutError)
+
+        resp.addErrback(handle_timeout)
+        return resp

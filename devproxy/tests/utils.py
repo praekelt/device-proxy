@@ -12,7 +12,7 @@ class ProxyTestCase(TestCase):
     timeout = 1
 
     nokia_ua = 'Nokia3100/1.0 (02.70) Profile/MIDP-1.0 ' \
-                'Configuration/CLDC-1.0'
+               'Configuration/CLDC-1.0'
 
     iphone_ua = 'Mozilla/5.0 (iPhone; U; CPU iPhone OS 2_2_1 ' \
                 'like Mac OS X; en-us) AppleWebKit/525.18.1 ' \
@@ -31,17 +31,19 @@ class ProxyTestCase(TestCase):
             started_handlers.append((yield handler.setup_handler()))
         defer.returnValue(started_handlers)
 
+    @defer.inlineCallbacks
     def tearDown(self):
         for port, proxy_factory in self._running_proxies:
-            port.loseConnection()
-        self.mocked_backend.stop()
+            yield port.loseConnection()
+        yield self.mocked_backend.stop()
 
     def handle_request(self, request):
         self.mocked_backend.queue.put(request)
         return 'foo'
 
     def start_proxy(self, handlers):
-        proxy = ReverseProxyResource(handlers, '/_debug', '/_health',
+        proxy = ReverseProxyResource(
+            handlers, '/_debug', '/_health',
             self.mocked_backend.addr.host, self.mocked_backend.addr.port, '')
         site_factory = Site(proxy)
         port = reactor.listenTCP(0, site_factory)
@@ -53,7 +55,7 @@ class ProxyTestCase(TestCase):
 
 class TestHandler(BaseHandler):
     def __init__(self, header_callback=None, cookie_callback=None,
-                    debug_callback=None):
+                 debug_callback=None):
         noop = lambda _: None
         self.header_callback = header_callback or noop
         self.cookie_callback = cookie_callback or noop
@@ -144,17 +146,24 @@ class MockHttpServer(object):
 
     def __init__(self, handler=None):
         self.queue = defer.DeferredQueue()
-        self._handler = handler or self.handle_request
+        self._handler = handler
         self._webserver = None
         self.addr = None
         self.url = None
 
+    def set_handler(self, handler):
+        self._handler = handler
+
     def handle_request(self, request):
         self.queue.put(request)
 
+    def call_handler(self, request):
+        handler = self._handler or self.handle_request
+        return handler(request)
+
     @defer.inlineCallbacks
     def start(self):
-        root = MockResource(self._handler)
+        root = MockResource(self.call_handler)
         site_factory = Site(root)
         self._webserver = yield reactor.listenTCP(0, site_factory)
         self.addr = self._webserver.getHost()

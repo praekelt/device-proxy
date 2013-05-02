@@ -6,3 +6,4 @@ include requirements.pip
 include get-wurfl-2.1-db.sh
 include twisted/plugins/devproxy_plugin.py
 exclude devproxy/handlers/wurfl_handler/wurfl_devices.py
+graft twisted

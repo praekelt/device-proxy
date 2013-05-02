@@ -7,7 +7,7 @@ def listify(filename):
 setup(
     name="device-proxy",
     version="0.1e",
-    url='http://github.com/smn/device-proxy',
+    url='http://github.com/praekelt/device-proxy',
     license='BSD',
     description="Device Proxy. A reverse HTTP Proxy that can inspect and "
                 "manipulate HTTP Headers before sending upstream.",

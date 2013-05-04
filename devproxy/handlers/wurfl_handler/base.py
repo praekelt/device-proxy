@@ -13,6 +13,10 @@ from devproxy.handlers.wurfl_handler import wurfl_devices
 from devproxy.handlers.wurfl_handler import debug
 
 
+class WurflHandlerException(Exception):
+    pass
+
+
 class WurflHandler(BaseHandler):
     def validate_config(self, config):
         self.header_name = config.get('header_name', 'X-UA-map')
@@ -26,15 +30,21 @@ class WurflHandler(BaseHandler):
         self.devices = wurfl_devices.devices
         self.algorithm = TwoStepAnalysis(self.devices)
         self.memcached = yield self.connect_to_memcached(
-                **self.memcached_config)
+            **self.memcached_config)
         self.namespace = yield self.get_namespace()
         returnValue(self)
 
-    @inlineCallbacks
     def connect_to_memcached(self, host="localhost", port=DEFAULT_PORT):
         creator = protocol.ClientCreator(reactor, MemCacheProtocol)
-        client = yield creator.connectTCP(host, port)
-        returnValue(client)
+
+        def eb(failure):
+            raise WurflHandlerException(
+                'Unable to connect to memcached on %s:%s' % (
+                    host, port), failure)
+
+        d = creator.connectTCP(host, port)
+        d.addErrback(eb)
+        return d
 
     def get_namespace_key(self):
         return '%s_namespace' % (self.cache_prefix,)

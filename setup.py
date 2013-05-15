@@ -20,7 +20,7 @@ setup(
     ],
     package_data={
         'twisted.plugins': ['twisted/plugins/devproxy_plugin.py'],
-        'devproxy': ['etc/*']
+        'devproxy.etc': ['devproxy/etc/*']
     },
     include_package_data=True,
     install_requires=listify('requirements.pip'),

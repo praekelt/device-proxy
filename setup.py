@@ -20,13 +20,7 @@ setup(
     ],
     package_data={
         'twisted.plugins': ['twisted/plugins/devproxy_plugin.py'],
-        'devproxy': [
-            'config.yaml',
-            'get-wurfl-2.1-db.sh',
-            'haproxy.cfg',
-            'README.rst',
-            'requirements.pip'
-        ]
+        'devproxy': ['etc/*']
     },
     include_package_data=True,
     install_requires=listify('requirements.pip'),

@@ -13,7 +13,7 @@ Installation is pegged to the latest GPL version of Wurfl.
 Assuming you're living in a virtualenv::
 
     $ pip install -r requirements.pip
-    $ devproxy/etc/get-wurfl-2.1-db.sh
+    $ ./devproxy/etc/get-wurfl-2.1-db.sh
 
 Running
 -------

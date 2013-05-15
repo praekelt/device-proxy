@@ -6,7 +6,7 @@ def listify(filename):
 
 setup(
     name="device-proxy",
-    version="0.1h",
+    version="0.1i",
     url='http://github.com/praekelt/device-proxy',
     license='BSD',
     description="Device Proxy. A reverse HTTP Proxy that can inspect and "
@@ -20,6 +20,13 @@ setup(
     ],
     package_data={
         'twisted.plugins': ['twisted/plugins/devproxy_plugin.py'],
+        'devproxy': [
+            'config.yaml',
+            'get-wurfl-2.1-db.sh',
+            'haproxy.cfg',
+            'README.rst',
+            'requirements.pip'
+        ]
     },
     include_package_data=True,
     install_requires=listify('requirements.pip'),

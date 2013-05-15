@@ -3,7 +3,6 @@ include get-wurfl-2.1-db.sh
 include haproxy.cfg
 include README.rst
 include requirements.pip
-include get-wurfl-2.1-db.sh
 include twisted/plugins/devproxy_plugin.py
 recursive-include devproxy *.py
 exclude devproxy/handlers/wurfl_handler/wurfl_devices.py*

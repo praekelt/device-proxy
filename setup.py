@@ -2,11 +2,11 @@ from setuptools import setup
 
 
 def listify(filename):
-    return filter(None, open(filename, 'r').read().split('\n'))
+    return filter(None, open(filename, 'r').read().strip('\n').split('\n'))
 
 setup(
     name="device-proxy",
-    version="0.1j",
+    version="0.2",
     url='http://github.com/praekelt/device-proxy',
     license='BSD',
     description="Device Proxy. A reverse HTTP Proxy that can inspect and "
@@ -22,8 +22,13 @@ setup(
         'twisted.plugins': ['twisted/plugins/devproxy_plugin.py'],
         'devproxy.etc': ['devproxy/etc/*']
     },
+    data_files=[
+        ('/etc/supervisor/conf.d/', ['devproxy/etc/device-proxy.conf']),
+        ('/etc/device-proxy/', ['devproxy/etc/config.yaml']),
+        ('/etc/device-proxy/', ['devproxy/etc/haproxy.cfg'])
+    ],
     include_package_data=True,
-    install_requires=listify('requirements.pip'),
+    install_requires=listify('requirements.txt'),
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',

@@ -27,7 +27,7 @@ class ScientiaMobileCloudHandler(WurflHandler):
 
     @inlineCallbacks
     def setup_handler(self):
-        self.memcached = yield self.connect_to_memcached(
+        yield self.connect_to_memcached(
             **self.memcached_config)
         self.namespace = yield self.get_namespace()
         returnValue(self)

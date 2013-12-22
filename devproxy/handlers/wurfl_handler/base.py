@@ -2,8 +2,8 @@ import hashlib
 import json
 
 from twisted.internet.defer import inlineCallbacks, returnValue, succeed
-from twisted.internet import protocol, reactor
-from twisted.protocols.memcache import MemCacheProtocol, DEFAULT_PORT
+from twisted.internet import reactor
+from twisted.protocols.memcache import DEFAULT_PORT
 from twisted.web.template import flattenString
 
 from pywurfl.algorithms import TwoStepAnalysis
@@ -11,6 +11,7 @@ from pywurfl.algorithms import TwoStepAnalysis
 from devproxy.handlers.base import BaseHandler
 from devproxy.handlers.wurfl_handler import wurfl_devices
 from devproxy.handlers.wurfl_handler import debug
+from devproxy.utils.memcached import ReconnectingMemCacheClientFactory
 
 
 class WurflHandlerException(Exception):
@@ -29,22 +30,17 @@ class WurflHandler(BaseHandler):
     def setup_handler(self):
         self.devices = wurfl_devices.devices
         self.algorithm = TwoStepAnalysis(self.devices)
-        self.memcached = yield self.connect_to_memcached(
-            **self.memcached_config)
+        yield self.connect_to_memcached(**self.memcached_config)
         self.namespace = yield self.get_namespace()
         returnValue(self)
 
     def connect_to_memcached(self, host="localhost", port=DEFAULT_PORT):
-        creator = protocol.ClientCreator(reactor, MemCacheProtocol)
+        self.memcached_factory = ReconnectingMemCacheClientFactory()
+        return reactor.connectTCP(host, port, self.memcached_factory)
 
-        def eb(failure):
-            raise WurflHandlerException(
-                'Unable to connect to memcached on %s:%s' % (
-                    host, port), failure)
-
-        d = creator.connectTCP(host, port)
-        d.addErrback(eb)
-        return d
+    @property
+    def memcached(self):
+        return self.memcached_factory.client
 
     def get_namespace_key(self):
         return '%s_namespace' % (self.cache_prefix,)

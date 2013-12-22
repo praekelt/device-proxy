@@ -1,7 +1,8 @@
 import hashlib
 import json
 
-from twisted.internet.defer import inlineCallbacks, returnValue, succeed
+from twisted.internet.defer import (inlineCallbacks, returnValue, succeed,
+                                    Deferred)
 from twisted.internet import reactor
 from twisted.protocols.memcache import DEFAULT_PORT
 from twisted.web.template import flattenString
@@ -36,7 +37,19 @@ class WurflHandler(BaseHandler):
 
     def connect_to_memcached(self, host="localhost", port=DEFAULT_PORT):
         self.memcached_factory = ReconnectingMemCacheClientFactory()
-        return reactor.connectTCP(host, port, self.memcached_factory)
+        reactor.connectTCP(host, port, self.memcached_factory)
+
+        d = Deferred()
+
+        def cb():
+            if hasattr(self.memcached_factory, 'client'):
+                d.callback(self.memcached_factory.client)
+            else:
+                reactor.callLater(0, cb)
+
+        cb()
+
+        return d
 
     @property
     def memcached(self):

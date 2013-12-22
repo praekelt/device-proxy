@@ -47,7 +47,7 @@ class WurlfHandlerTestCase(ProxyTestCase):
         self.assertEqual(response.delivered_body, 'foo')
         req = yield self.mocked_backend.queue.get()
         self.assertEqual(req.requestHeaders.getRawHeaders('x-ua-header'),
-            ['high'])
+            ['medium'])
 
     @inlineCallbacks
     def test_caching_prefix(self):
@@ -91,7 +91,7 @@ class WurlfHandlerTestCase(ProxyTestCase):
         self.assertTrue(self.fake_memcached.get(cache_key))
         req = yield self.mocked_backend.queue.get()
         self.assertEqual(req.requestHeaders.getRawHeaders('X-UA-header'),
-            ['high'])
+            ['medium'])
 
     @inlineCallbacks
     def test_cache_lifetime(self):

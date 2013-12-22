@@ -54,12 +54,8 @@ This is what the processing chain looks like::
 4. The Backend application renders the request with a template set suitable for
    the given HTTP request.
 
---------------------------------------------------------------------------------
+.. note:: By default DeviceProxy only caches the lookup in Memcache, not in the Cookie.
 
-    **NOTE:**
-    By default DeviceProxy only caches the lookup in Memcache, not in the Cookie.
-
---------------------------------------------------------------------------------
 
 .. |travis| image:: https://travis-ci.org/praekelt/device-proxy.png?branch=develop
 .. _travis: https://travis-ci.org/praekelt/device-proxy

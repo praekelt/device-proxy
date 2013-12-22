@@ -5,6 +5,8 @@ Inspects incoming HTTP requests adds some HTTP headers and proxies upstream.
 Has ability to add extra cookies for HTTP responses being sent back to the
 client.
 
+|travis|_ |coveralls|_
+
 Installation
 ------------
 
@@ -58,3 +60,9 @@ This is what the processing chain looks like::
     By default DeviceProxy only caches the lookup in Memcache, not in the Cookie.
 
 --------------------------------------------------------------------------------
+
+.. |travis| image:: https://travis-ci.org/praekelt/device-proxy.png?branch=develop
+.. _travis: https://travis-ci.org/praekelt/device-proxy
+
+.. |coveralls| image:: https://coveralls.io/repos/praekelt/device-proxy/badge.png?branch=develop
+.. _coveralls: https://coveralls.io/r/praekelt/device-proxy

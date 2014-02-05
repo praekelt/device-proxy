@@ -55,3 +55,11 @@ class ProxyTestCase(ProxyTestCase):
         resp = yield http.request('%s/_debug' % (url,), method='GET')
         self.assertTrue('debugfoo' in resp.delivered_body)
         self.assertTrue('debugbar' in resp.delivered_body)
+
+    @inlineCallbacks
+    def test_health_resource(self):
+        proxy, url = self.start_proxy(self.debug_handlers)
+        resp = yield http.request('%s/_health' % (url,), method='GET')
+        self.assertTrue('OK' in resp.delivered_body)
+        header = resp.headers.getRawHeaders('Cache-Control')[0]
+        self.assertEquals(header, 'no-cache')

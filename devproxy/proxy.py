@@ -33,6 +33,7 @@ class HealthResource(resource.Resource):
     isLeaf = True
 
     def render_GET(self, request):
+        request.setHeader('Cache-Control', 'no-cache')
         return 'OK'
 
 

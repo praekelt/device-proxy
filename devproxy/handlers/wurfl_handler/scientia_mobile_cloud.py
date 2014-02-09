@@ -34,10 +34,16 @@ class ScientiaMobileCloudHandler(WurflHandler):
 
     @inlineCallbacks
     def handle_request_and_cache(self, cache_key, user_agent, request):
-        device = yield self.get_device_from_smcloud(user_agent)
+        expireTime = self.cache_lifetime
+        try:
+            device = yield self.get_device_from_smcloud(user_agent)
+        except ScientiaMobileCloudHandlerConnectError:
+            # Set a short expiry time in case of network error
+            device = {}
+            expireTime = 60
         headers = self.handle_device(request, device)
         yield self.memcached.set(cache_key, json.dumps(headers),
-                                 expireTime=self.cache_lifetime)
+                                 expireTime=expireTime)
         returnValue(headers)
 
     @inlineCallbacks
@@ -52,8 +58,11 @@ class ScientiaMobileCloudHandler(WurflHandler):
             'X-Cloud-Client': self.SMCLOUD_CONFIG['client_version'],
             'Authorization': 'Basic %s' % b64
         }
-        page = yield getPage(self.SMCLOUD_CONFIG['url'], headers=headers,
-                             agent=user_agent)
+        try:
+            page = yield getPage(self.SMCLOUD_CONFIG['url'], headers=headers,
+                             agent=user_agent, timeout=5)
+        except ConnectError, exc:
+            raise ScientiaMobileCloudHandlerConnectError(exc)
         device = json.loads(page)
         returnValue(device)
 

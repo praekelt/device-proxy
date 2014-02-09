@@ -7,6 +7,10 @@ from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.web.client import getPage
 
 
+class ScientiaMobileCloudHandlerConnectError(Exception):
+    pass
+
+
 class ScientiaMobileCloudHandler(WurflHandler):
 
     SMCLOUD_CONFIG = {

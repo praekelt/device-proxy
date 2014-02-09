@@ -35,13 +35,15 @@ class ScientiaMobileCloudHandler(WurflHandler):
     @inlineCallbacks
     def handle_request_and_cache(self, cache_key, user_agent, request):
         expireTime = self.cache_lifetime
-        try:
-            device = yield self.get_device_from_smcloud(user_agent)
-        except ScientiaMobileCloudHandlerConnectError:
-            # Set a short expiry time in case of network error
-            device = {}
-            expireTime = 60
-        headers = self.handle_device(request, device)
+        headers = self.handle_user_agent(user_agent)
+        if headers is None:
+            try:
+                device = yield self.get_device_from_smcloud(user_agent)
+            except ScientiaMobileCloudHandlerConnectError:
+                # Set a short expiry time in case of network error
+                device = {}
+                expireTime = 60
+            headers = self.handle_device(request, device)
         yield self.memcached.set(cache_key, json.dumps(headers),
                                  expireTime=expireTime)
         returnValue(headers)

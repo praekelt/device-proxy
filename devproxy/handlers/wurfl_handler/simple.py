@@ -8,3 +8,12 @@ class SimpleWurflHandler(WurflHandler):
             return [{self.header_name: 'medium'}]
         else:
             return [{self.header_name: 'high'}]
+
+
+class SimpleWurflTestHandler(SimpleWurflHandler):
+    """Handler used in tests. Do not use in production."""
+
+    def handle_user_agent(self, user_agent):
+        if user_agent == 'Some special bot':
+            return [{self.header_name: 'bot'}]
+        return None

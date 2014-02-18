@@ -6,7 +6,7 @@ def listify(filename):
 
 setup(
     name="device-proxy",
-    version="0.1j",
+    version="0.2",
     url='http://github.com/praekelt/device-proxy',
     license='BSD',
     description="Device Proxy. A reverse HTTP Proxy that can inspect and "

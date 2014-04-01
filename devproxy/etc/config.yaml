@@ -1,0 +1,48 @@
+port: 8025
+upstream: 127.0.0.1:8026
+# Path to hit to get debug from each of the handlers.
+debug_path: /_debug
+health_path: /health
+
+handlers:
+  - demo_handler: devproxy.handlers.demo.DemoHandler
+  # - scientia_mobile_handler: devproxy.handlers.wurfl_handler.ScientiaMobileCloudResolutionHandler
+
+demo_handler:
+  cookies:
+    type: dog-biscuit
+
+scientia_mobile_handler:
+  memcached:
+    host: localhost
+    port: 11211
+  cache_prefix: devproxy
+  cache_lifetime: 86400
+  smcloud_api_key: "your api key"
+
+# NOTE: Wurfl based approach deprecated.
+#       --------------------------------
+#
+#       Originally we provided a way of working with the old `wurfl.xml` file.
+#       However Luca and the friendly people at ScientiaMobile have gone
+#       through significant amount of trouble of having this file purged
+#       off of the the Internet. Leaving it here commented out for people
+#       who have a copy of the `wurfl.xml` file or who manage to find a
+#       workable copy somehere (check https://github.com/search?l=xml&q=wurfl.xml&ref=searchresults&type=Code)
+#
+#       We ship the ScientiaMobileCloudHandler for people who have purchased
+#       a licence with ScientiaMobile.
+#
+#  handlers:
+#   - wurfl: devproxy.handlers.wurfl_handler.simple.SimpleWurflHandler
+#
+# wurfl:
+#   # All keys in Memcached are prefixed with this
+#   cache_prefix: devproxy
+#   cache_lifetime: 100   # defaults to 0, which means it won't expire unless
+#                         # memcached decides to delete the key based on its
+#                         # least-recently-used counters when memory fills up.
+#   # Connect to Memcached with the following parameters
+#   memcached:
+#     host: localhost
+#     port: 11211

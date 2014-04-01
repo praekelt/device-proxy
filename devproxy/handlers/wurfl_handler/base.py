@@ -1,9 +1,10 @@
 import hashlib
 import json
 
-from twisted.internet.defer import inlineCallbacks, returnValue, succeed
-from twisted.internet import protocol, reactor
-from twisted.protocols.memcache import MemCacheProtocol, DEFAULT_PORT
+from twisted.internet.defer import (inlineCallbacks, returnValue, succeed,
+                                    Deferred)
+from twisted.internet import reactor
+from twisted.protocols.memcache import DEFAULT_PORT
 from twisted.web.template import flattenString
 
 from pywurfl.algorithms import TwoStepAnalysis
@@ -11,6 +12,11 @@ from pywurfl.algorithms import TwoStepAnalysis
 from devproxy.handlers.base import BaseHandler
 from devproxy.handlers.wurfl_handler import wurfl_devices
 from devproxy.handlers.wurfl_handler import debug
+from devproxy.utils.memcached import ReconnectingMemCacheClientFactory
+
+
+class WurflHandlerException(Exception):
+    pass
 
 
 class WurflHandler(BaseHandler):
@@ -25,16 +31,29 @@ class WurflHandler(BaseHandler):
     def setup_handler(self):
         self.devices = wurfl_devices.devices
         self.algorithm = TwoStepAnalysis(self.devices)
-        self.memcached = yield self.connect_to_memcached(
-                **self.memcached_config)
+        yield self.connect_to_memcached(**self.memcached_config)
         self.namespace = yield self.get_namespace()
         returnValue(self)
 
-    @inlineCallbacks
     def connect_to_memcached(self, host="localhost", port=DEFAULT_PORT):
-        creator = protocol.ClientCreator(reactor, MemCacheProtocol)
-        client = yield creator.connectTCP(host, port)
-        returnValue(client)
+        self.memcached_factory = ReconnectingMemCacheClientFactory()
+        reactor.connectTCP(host, port, self.memcached_factory)
+
+        d = Deferred()
+
+        def cb():
+            if hasattr(self.memcached_factory, 'client'):
+                d.callback(self.memcached_factory.client)
+            else:
+                reactor.callLater(0, cb)
+
+        cb()
+
+        return d
+
+    @property
+    def memcached(self):
+        return self.memcached_factory.client
 
     def get_namespace_key(self):
         return '%s_namespace' % (self.cache_prefix,)

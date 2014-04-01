@@ -5,15 +5,12 @@ Inspects incoming HTTP requests adds some HTTP headers and proxies upstream.
 Has ability to add extra cookies for HTTP responses being sent back to the
 client.
 
+|travis|_ |coveralls|_
+
 Installation
 ------------
 
-Installation is pegged to the latest GPL version of Wurfl.
-
-Assuming you're living in a virtualenv::
-
-    $ pip install -r requirements.pip
-    $ ./get-wurfl-2.1-db.sh
+    $ pip install device-proxy
 
 Running
 -------
@@ -52,9 +49,11 @@ This is what the processing chain looks like::
 4. The Backend application renders the request with a template set suitable for
    the given HTTP request.
 
---------------------------------------------------------------------------------
+.. note:: By default DeviceProxy only caches the lookup in Memcache, not in the Cookie.
 
-    **NOTE:**
-    By default DeviceProxy only caches the lookup in Memcache, not in the Cookie.
 
---------------------------------------------------------------------------------
+.. |travis| image:: https://travis-ci.org/praekelt/device-proxy.png?branch=develop
+.. _travis: https://travis-ci.org/praekelt/device-proxy
+
+.. |coveralls| image:: https://coveralls.io/repos/praekelt/device-proxy/badge.png?branch=develop
+.. _coveralls: https://coveralls.io/r/praekelt/device-proxy

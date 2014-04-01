@@ -1,6 +1,6 @@
 import hashlib
 
-from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import inlineCallbacks, succeed
 
 from devproxy.handlers.wurfl_handler.simple import SimpleWurflHandler
 from devproxy.utils import http
@@ -13,8 +13,9 @@ class WurlfHandlerTestCase(ProxyTestCase):
     def setUp(self):
         yield super(WurlfHandlerTestCase, self).setUp()
         self.fake_memcached = FakeMemcached()
+        self.patch(SimpleWurflHandler, 'memcached', self.fake_memcached)
         self.patch(SimpleWurflHandler, 'connect_to_memcached',
-            self.patch_memcached)
+                   lambda _: succeed(True))
 
         self.wurfl_handlers = yield self.start_handlers([SimpleWurflHandler({
             'header_name': 'X-UA-header',
@@ -23,9 +24,6 @@ class WurlfHandlerTestCase(ProxyTestCase):
             'cache_lifetime': 100,
             'debug_path': '/_debug',
         })])
-
-    def patch_memcached(self, **config):
-        return self.fake_memcached
 
     @inlineCallbacks
     def test_wurfl_nokia_lookup(self):
@@ -47,7 +45,7 @@ class WurlfHandlerTestCase(ProxyTestCase):
         self.assertEqual(response.delivered_body, 'foo')
         req = yield self.mocked_backend.queue.get()
         self.assertEqual(req.requestHeaders.getRawHeaders('x-ua-header'),
-            ['high'])
+            ['medium'])
 
     @inlineCallbacks
     def test_caching_prefix(self):
@@ -91,7 +89,7 @@ class WurlfHandlerTestCase(ProxyTestCase):
         self.assertTrue(self.fake_memcached.get(cache_key))
         req = yield self.mocked_backend.queue.get()
         self.assertEqual(req.requestHeaders.getRawHeaders('X-UA-header'),
-            ['high'])
+            ['medium'])
 
     @inlineCallbacks
     def test_cache_lifetime(self):

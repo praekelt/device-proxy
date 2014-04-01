@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
 
 def listify(filename):
@@ -6,16 +6,22 @@ def listify(filename):
 
 setup(
     name="device-proxy",
-    version="0.1b",
-    url='http://github.com/smn/device-proxy',
+    version="0.2",
+    url='http://github.com/praekelt/device-proxy',
     license='BSD',
-    description="Device Proxy. A reverse HTTP Proxy that can inspect and " \
+    description="Device Proxy. A reverse HTTP Proxy that can inspect and "
                 "manipulate HTTP Headers before sending upstream.",
     long_description=open('README.rst', 'r').read(),
     author='Praekelt Foundation',
     author_email='dev@praekeltfoundation.org',
-    packages=find_packages(),
-    package_data={'twisted.plugins': ['twisted/plugins/*.py']},
+    packages=[
+        "devproxy",
+        "twisted.plugins",
+    ],
+    package_data={
+        'twisted.plugins': ['twisted/plugins/devproxy_plugin.py'],
+        'devproxy.etc': ['devproxy/etc/*']
+    },
     include_package_data=True,
     install_requires=listify('requirements.pip'),
     classifiers=[

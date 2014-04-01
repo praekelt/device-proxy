@@ -19,8 +19,10 @@ class WurlfHandlerTestCase(ProxyTestCase):
                     'get_device_from_smcloud',
                     self.patch_get_device_from_smcloud)
         self.patch(ScientiaMobileCloudResolutionHandler,
-                   'connect_to_memcached',
-                   self.patch_memcached)
+                   'memcached', self.fake_memcached)
+        self.patch(ScientiaMobileCloudResolutionHandler,
+                   'connect_to_memcached', lambda _: succeed(True))
+
         self.wurfl_handlers = yield self.start_handlers([
             ScientiaMobileCloudResolutionHandler({
                 'header_name': 'X-UA-header',
@@ -50,9 +52,6 @@ class WurlfHandlerTestCase(ProxyTestCase):
 
     def patch_get_device_from_smcloud(self, user_agent):
         return succeed(self._mocked_devices.get(user_agent, {}))
-
-    def patch_memcached(self, **config):
-        return self.fake_memcached
 
     @inlineCallbacks
     def test_wurfl_nokia_lookup(self):

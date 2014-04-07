@@ -3,5 +3,4 @@ include requirements.pip
 include twisted/plugins/devproxy_plugin.py
 recursive-include devproxy *.py
 recursive-include devproxy/etc/ *
-exclude devproxy/handlers/wurfl_handler/wurfl_devices.py*
 graft twisted

@@ -3,7 +3,7 @@ import hashlib
 from twisted.internet.defer import inlineCallbacks, succeed
 
 from devproxy.handlers.wurfl_handler.scientia_mobile_cloud_resolution \
-    import ScientiaMobileCloudResolutionHandler
+    import ScientiaMobileCloudResolutionTestHandler
 from devproxy.utils import http
 from devproxy.tests.utils import FakeMemcached, ProxyTestCase
 
@@ -15,16 +15,15 @@ class WurlfHandlerTestCase(ProxyTestCase):
         yield super(WurlfHandlerTestCase, self).setUp()
         self.fake_memcached = FakeMemcached()
         self._mocked_devices = {}
-        self.patch(ScientiaMobileCloudResolutionHandler,
+        self.patch(ScientiaMobileCloudResolutionTestHandler,
                     'get_device_from_smcloud',
                     self.patch_get_device_from_smcloud)
-        self.patch(ScientiaMobileCloudResolutionHandler,
+        self.patch(ScientiaMobileCloudResolutionTestHandler,
                    'memcached', self.fake_memcached)
-        self.patch(ScientiaMobileCloudResolutionHandler,
+        self.patch(ScientiaMobileCloudResolutionTestHandler,
                    'connect_to_memcached', lambda _: succeed(True))
-
         self.wurfl_handlers = yield self.start_handlers([
-            ScientiaMobileCloudResolutionHandler({
+            ScientiaMobileCloudResolutionTestHandler({
                 'header_name': 'X-UA-header',
                 'cache_prefix': 'prefix',
                 'cache_prefix_delimiter': '_',
@@ -131,3 +130,14 @@ class WurlfHandlerTestCase(ProxyTestCase):
         self.assertEqual(response.delivered_body, 'foo')
         cache_key = handler.get_cache_key(self.iphone_ua)
         self.assertEqual(self.fake_memcached.key_lifetime(cache_key), 100)
+
+    @inlineCallbacks
+    def test_handle_user_agent(self):
+        proxy, url = self.start_proxy(self.wurfl_handlers)
+        response = yield http.request(url, headers={
+            'User-Agent': 'Some special bot',
+        })
+        self.assertEqual(response.delivered_body, 'foo')
+        req = yield self.mocked_backend.queue.get()
+        self.assertEqual(req.requestHeaders.getRawHeaders('x-ua-header'),
+                         ['bot'])

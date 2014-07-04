@@ -26,6 +26,7 @@ class WurflHandler(BaseHandler):
         self.cache_prefix_delimiter = config.get('cache_prefix_delimiter', '#')
         self.cache_lifetime = int(config.get('cache_lifetime', 0))
         self.memcached_config = config.get('memcached', {})
+        self.default_ua_map = config.get('default_ua_map', 'web')
 
     @inlineCallbacks
     def setup_handler(self):
@@ -99,8 +100,10 @@ class WurflHandler(BaseHandler):
 
     @inlineCallbacks
     def handle_request_and_cache(self, cache_key, user_agent, request):
-        device = self.devices.select_ua(user_agent, search=self.algorithm)
-        headers = self.handle_device(request, device)
+        headers = self.handle_user_agent(user_agent)
+        if headers is None:
+            device = self.devices.select_ua(user_agent, search=self.algorithm)
+            headers = self.handle_device(request, device)
         yield self.memcached.set(cache_key, json.dumps(headers),
             expireTime=self.cache_lifetime)
         returnValue(headers)
@@ -119,6 +122,12 @@ class WurflHandler(BaseHandler):
         user_agent = unicode(request.getHeader('User-Agent') or '')
         device = self.devices.select_ua(user_agent, search=self.algorithm)
         return flattenString(None, debug.DebugElement(device))
+
+    def handle_user_agent(self, user_agent):
+        """User agents unknown to Wurfl may require special handling. Override
+        this method to provide it. Return None to indicate no special
+        handling."""
+        return None
 
     def handle_device(self, request, device):
         raise NotImplementedError("Subclasses should implement this")

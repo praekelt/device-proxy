@@ -67,7 +67,8 @@ class ReverseProxyResource(proxy.ReverseProxyResource):
     encoding = 'utf-8'
 
     def __init__(self, handlers, debug_path, health_path, *args, **kwargs):
-        # json_path is not a required configuration parameter
+        # json_path was introduced later so use kwargs to avoid breaking
+        # existing subclasses in third party code.
         json_path = kwargs.pop('json_path', '')
         proxy.ReverseProxyResource.__init__(self, *args, **kwargs)
         self.debug_path = debug_path.lstrip('/')
@@ -153,6 +154,7 @@ class ProxySite(server.Site):
         self.path = config.get('path', '')
         self.debug_path = config.get('debug_path', '')
         self.health_path = config.get('health_path', '')
+        self.json_path = config.get('json_path', '')
         self.handlers = handlers
 
     def startFactory(self):
@@ -176,4 +178,4 @@ class ProxySite(server.Site):
 
         self.resource = self.resourceClass(started_handlers, self.debug_path,
             self.health_path, self.upstream_host, int(self.upstream_port),
-            self.path)
+            self.path, json_path=self.json_path)

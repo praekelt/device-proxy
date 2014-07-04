@@ -1,6 +1,6 @@
 import hashlib
 
-from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import inlineCallbacks, succeed
 
 from devproxy.handlers.wurfl_handler.simple import SimpleWurflTestHandler
 from devproxy.utils import http
@@ -13,9 +13,9 @@ class WurlfHandlerTestCase(ProxyTestCase):
     def setUp(self):
         yield super(WurlfHandlerTestCase, self).setUp()
         self.fake_memcached = FakeMemcached()
+        self.patch(SimpleWurflTestHandler, 'memcached', self.fake_memcached)
         self.patch(SimpleWurflTestHandler, 'connect_to_memcached',
-            self.patch_memcached)
-
+                   lambda _: succeed(True))
         self.wurfl_handlers = yield self.start_handlers([SimpleWurflTestHandler({
             'header_name': 'X-UA-header',
             'cache_prefix': 'prefix',
@@ -23,9 +23,6 @@ class WurlfHandlerTestCase(ProxyTestCase):
             'cache_lifetime': 100,
             'debug_path': '/_debug',
         })])
-
-    def patch_memcached(self, **config):
-        return self.fake_memcached
 
     @inlineCallbacks
     def test_wurfl_nokia_lookup(self):

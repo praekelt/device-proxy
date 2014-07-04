@@ -1,9 +1,11 @@
+import json
+
 from twisted.internet import defer
 from twisted.internet.defer import inlineCallbacks
 
 from devproxy.utils import http
 from devproxy.tests.utils import (HeaderHandler, CookieHandler, DebugHandler,
-                                    ProxyTestCase)
+                                    JSONHandler, ProxyTestCase)
 from devproxy.handlers.base import Cookie
 
 
@@ -25,6 +27,11 @@ class ProxyTestCase(ProxyTestCase):
         self.debug_handlers = yield self.start_handlers(map(DebugHandler, [
             lambda request: defer.succeed('debugfoo'),
             lambda request: defer.succeed('debugbar'),
+            ]))
+
+        self.json_handlers = yield self.start_handlers(map(JSONHandler, [
+            lambda request: defer.succeed([{'header-one': 'one'}]),
+            lambda request: defer.succeed([{'header-two': 'two'}]),
             ]))
 
     @inlineCallbacks
@@ -63,3 +70,11 @@ class ProxyTestCase(ProxyTestCase):
         self.assertTrue('OK' in resp.delivered_body)
         header = resp.headers.getRawHeaders('Cache-Control')[0]
         self.assertEquals(header, 'no-cache')
+
+    @inlineCallbacks
+    def test_json_resource(self):
+        proxy, url = self.start_proxy(self.json_handlers)
+        resp = yield http.request('%s/_json' % (url,), method='GET')
+        di = json.loads(resp.delivered_body)
+        self.assertTrue(di.get('header-one'), 'one')
+        self.assertTrue(di.get('header-two'), 'two')

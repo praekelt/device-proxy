@@ -42,7 +42,8 @@ class ProxyTestCase(TestCase):
 
     def start_proxy(self, handlers):
         proxy = ReverseProxyResource(handlers, '/_debug', '/_health',
-            self.mocked_backend.addr.host, self.mocked_backend.addr.port, '')
+            self.mocked_backend.addr.host, self.mocked_backend.addr.port, '',
+            json_path='_json')
         site_factory = Site(proxy)
         port = reactor.listenTCP(0, site_factory)
         addr = port.getHost()
@@ -53,11 +54,12 @@ class ProxyTestCase(TestCase):
 
 class TestHandler(BaseHandler):
     def __init__(self, header_callback=None, cookie_callback=None,
-                    debug_callback=None):
+                    debug_callback=None, json_callback=None):
         noop = lambda _: None
         self.header_callback = header_callback or noop
         self.cookie_callback = cookie_callback or noop
         self.debug_callback = debug_callback or noop
+        self.json_callback = json_callback or noop
 
     def setup_handler(self):
         d = defer.Deferred()
@@ -90,6 +92,10 @@ class CookieHandler(TestHandler):
 class DebugHandler(TestHandler):
     def __init__(self, callback):
         super(DebugHandler, self).__init__(debug_callback=callback)
+
+
+class JSONHandler(HeaderHandler):
+    pass
 
 
 class FakeMemcached(object):

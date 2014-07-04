@@ -1,5 +1,6 @@
 import urlparse
 from urllib import quote as urlquote
+import json
 
 from twisted.python import log
 from twisted.internet import defer, reactor
@@ -37,15 +38,41 @@ class HealthResource(resource.Resource):
         return 'OK'
 
 
+class JSONResource(resource.Resource):
+    """Translate headers returned by handlers into a JSON result and return"""
+    isLeaf = True
+
+    def __init__(self, handlers, *args, **kwargs):
+        resource.Resource.__init__(self, *args, **kwargs)
+        self.handlers = handlers
+
+    def render_GET(self, request):
+        self.call_handlers(request)
+        return server.NOT_DONE_YET
+
+    @defer.inlineCallbacks
+    def call_handlers(self, request):
+        result = {}
+        for handler in self.handlers:
+            headers = (yield handler.get_headers(request)) or []
+            for header in headers:
+                result.update(header)
+        request.write(json.dumps(result).encode('utf-8'))
+        request.finish()
+
+
 class ReverseProxyResource(proxy.ReverseProxyResource):
 
     proxyClientFactoryClass = ProxyClientFactory
     encoding = 'utf-8'
 
     def __init__(self, handlers, debug_path, health_path, *args, **kwargs):
+        # json_path is not a required configuration parameter
+        json_path = kwargs.pop('json_path', '')
         proxy.ReverseProxyResource.__init__(self, *args, **kwargs)
         self.debug_path = debug_path.lstrip('/')
         self.health_path = health_path.lstrip('/')
+        self.json_path = json_path.lstrip('/')
         self.handlers = handlers
 
     def getChild(self, path, request):
@@ -53,6 +80,8 @@ class ReverseProxyResource(proxy.ReverseProxyResource):
             return DebugResource(self.handlers)
         if self.health_path and path == self.health_path:
             return HealthResource()
+        if self.json_path and path == self.json_path:
+            return JSONResource(self.handlers)
 
         return ReverseProxyResource(self.handlers, '', '', self.host,
             self.port, self.path + '/' + urlquote(path, safe=""), self.reactor)

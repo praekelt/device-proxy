@@ -1,11 +1,9 @@
-import json
-
 from twisted.internet import defer
 from twisted.internet.defer import inlineCallbacks
 
 from devproxy.utils import http
 from devproxy.tests.utils import (HeaderHandler, CookieHandler, DebugHandler,
-                                    JSONHandler, ProxyTestCase)
+                                    EchoHandler, ProxyTestCase)
 from devproxy.handlers.base import Cookie
 
 
@@ -29,7 +27,7 @@ class ProxyTestCase(ProxyTestCase):
             lambda request: defer.succeed('debugbar'),
             ]))
 
-        self.json_handlers = yield self.start_handlers(map(JSONHandler, [
+        self.echo_handlers = yield self.start_handlers(map(EchoHandler, [
             lambda request: defer.succeed([{'header-one': 'one'}]),
             lambda request: defer.succeed([{'header-two': 'two'}]),
             ]))
@@ -72,9 +70,9 @@ class ProxyTestCase(ProxyTestCase):
         self.assertEquals(header, 'no-cache')
 
     @inlineCallbacks
-    def test_json_resource(self):
-        proxy, url = self.start_proxy(self.json_handlers)
-        resp = yield http.request('%s/_json' % (url,), method='GET')
-        di = json.loads(resp.delivered_body)
-        self.assertTrue(di.get('header-one'), 'one')
-        self.assertTrue(di.get('header-two'), 'two')
+    def test_echo_resource(self):
+        proxy, url = self.start_proxy(self.echo_handlers)
+        resp = yield http.request('%s/_echo' % (url,), method='GET')
+        self.assertTrue(resp.delivered_body, 'ok')
+        self.assertTrue(resp.headers.getRawHeaders('header-one'), ['one'])
+        self.assertTrue(resp.headers.getRawHeaders('header-two'), ['two'])

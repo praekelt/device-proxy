@@ -1,6 +1,5 @@
 import urlparse
 from urllib import quote as urlquote
-import json
 
 from twisted.python import log
 from twisted.internet import defer, reactor
@@ -38,8 +37,8 @@ class HealthResource(resource.Resource):
         return 'OK'
 
 
-class JSONResource(resource.Resource):
-    """Translate headers returned by handlers into a JSON result and return"""
+class EchoResource(resource.Resource):
+    """Put headers from handlers in reponse header and return"""
     isLeaf = True
 
     def __init__(self, handlers, *args, **kwargs):
@@ -52,12 +51,12 @@ class JSONResource(resource.Resource):
 
     @defer.inlineCallbacks
     def call_handlers(self, request):
-        result = {}
         for handler in self.handlers:
             headers = (yield handler.get_headers(request)) or []
             for header in headers:
-                result.update(header)
-        request.write(json.dumps(result).encode('utf-8'))
+                for k, v in header.items():
+                    request.setHeader(k, v)
+        request.write('ok')
         request.finish()
 
 
@@ -67,13 +66,13 @@ class ReverseProxyResource(proxy.ReverseProxyResource):
     encoding = 'utf-8'
 
     def __init__(self, handlers, debug_path, health_path, *args, **kwargs):
-        # json_path was introduced later so use kwargs to avoid breaking
+        # echo_path was introduced later so use kwargs to avoid breaking
         # existing subclasses in third party code.
-        json_path = kwargs.pop('json_path', '')
+        echo_path = kwargs.pop('echo_path', '')
         proxy.ReverseProxyResource.__init__(self, *args, **kwargs)
         self.debug_path = debug_path.lstrip('/')
         self.health_path = health_path.lstrip('/')
-        self.json_path = json_path.lstrip('/')
+        self.echo_path = echo_path.lstrip('/')
         self.handlers = handlers
 
     def getChild(self, path, request):
@@ -81,8 +80,8 @@ class ReverseProxyResource(proxy.ReverseProxyResource):
             return DebugResource(self.handlers)
         if self.health_path and path == self.health_path:
             return HealthResource()
-        if self.json_path and path == self.json_path:
-            return JSONResource(self.handlers)
+        if self.echo_path and path == self.echo_path:
+            return EchoResource(self.handlers)
 
         return ReverseProxyResource(self.handlers, '', '', self.host,
             self.port, self.path + '/' + urlquote(path, safe=""), self.reactor)
@@ -155,7 +154,7 @@ class ProxySite(server.Site):
         self.path = config.get('path', '')
         self.debug_path = config.get('debug_path', '')
         self.health_path = config.get('health_path', '')
-        self.json_path = config.get('json_path', '')
+        self.echo_path = config.get('echo_path', '')
         self.handlers = handlers
 
     def startFactory(self):
@@ -179,4 +178,4 @@ class ProxySite(server.Site):
 
         self.resource = self.resourceClass(started_handlers, self.debug_path,
             self.health_path, self.upstream_host, int(self.upstream_port),
-            self.path, json_path=self.json_path)
+            self.path, echo_path=self.echo_path)

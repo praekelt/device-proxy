@@ -41,9 +41,8 @@ class ProxyTestCase(TestCase):
         return 'foo'
 
     def start_proxy(self, handlers):
-        proxy = ReverseProxyResource(handlers, '/_debug', '/_health',
-            self.mocked_backend.addr.host, self.mocked_backend.addr.port, '',
-            echo_path='_echo')
+        proxy = ReverseProxyResource(handlers, '/_debug', '/_health', '/_echo',
+            self.mocked_backend.addr.host, self.mocked_backend.addr.port, '')
         site_factory = Site(proxy)
         port = reactor.listenTCP(0, site_factory)
         addr = port.getHost()

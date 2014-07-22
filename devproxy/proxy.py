@@ -65,10 +65,7 @@ class ReverseProxyResource(proxy.ReverseProxyResource):
     proxyClientFactoryClass = ProxyClientFactory
     encoding = 'utf-8'
 
-    def __init__(self, handlers, debug_path, health_path, *args, **kwargs):
-        # echo_path was introduced later so use kwargs to avoid breaking
-        # existing subclasses in third party code.
-        echo_path = kwargs.pop('echo_path', '')
+    def __init__(self, handlers, debug_path, health_path, echo_path, *args, **kwargs):
         proxy.ReverseProxyResource.__init__(self, *args, **kwargs)
         self.debug_path = debug_path.lstrip('/')
         self.health_path = health_path.lstrip('/')
@@ -83,7 +80,7 @@ class ReverseProxyResource(proxy.ReverseProxyResource):
         if self.echo_path and path == self.echo_path:
             return EchoResource(self.handlers)
 
-        return ReverseProxyResource(self.handlers, '', '', self.host,
+        return ReverseProxyResource(self.handlers, '', '', '', self.host,
             self.port, self.path + '/' + urlquote(path, safe=""), self.reactor)
 
     def render(self, request):
@@ -177,5 +174,5 @@ class ProxySite(server.Site):
                 raise ProxySiteException(handler.value)
 
         self.resource = self.resourceClass(started_handlers, self.debug_path,
-            self.health_path, self.upstream_host, int(self.upstream_port),
-            self.path, echo_path=self.echo_path)
+            self.health_path, self.echo_path, self.upstream_host, int(self.upstream_port),
+            self.path)

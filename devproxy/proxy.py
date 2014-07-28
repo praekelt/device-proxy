@@ -37,15 +37,39 @@ class HealthResource(resource.Resource):
         return 'OK'
 
 
+class EchoResource(resource.Resource):
+    """Put headers from handlers in reponse header and return"""
+    isLeaf = True
+
+    def __init__(self, handlers, *args, **kwargs):
+        resource.Resource.__init__(self, *args, **kwargs)
+        self.handlers = handlers
+
+    def render_GET(self, request):
+        self.call_handlers(request)
+        return server.NOT_DONE_YET
+
+    @defer.inlineCallbacks
+    def call_handlers(self, request):
+        for handler in self.handlers:
+            headers = (yield handler.get_headers(request)) or []
+            for header in headers:
+                for k, v in header.items():
+                    request.setHeader(k, v)
+        request.write('ok')
+        request.finish()
+
+
 class ReverseProxyResource(proxy.ReverseProxyResource):
 
     proxyClientFactoryClass = ProxyClientFactory
     encoding = 'utf-8'
 
-    def __init__(self, handlers, debug_path, health_path, *args, **kwargs):
+    def __init__(self, handlers, debug_path, health_path, echo_path, *args, **kwargs):
         proxy.ReverseProxyResource.__init__(self, *args, **kwargs)
         self.debug_path = debug_path.lstrip('/')
         self.health_path = health_path.lstrip('/')
+        self.echo_path = echo_path.lstrip('/')
         self.handlers = handlers
 
     def getChild(self, path, request):
@@ -53,8 +77,10 @@ class ReverseProxyResource(proxy.ReverseProxyResource):
             return DebugResource(self.handlers)
         if self.health_path and path == self.health_path:
             return HealthResource()
+        if self.echo_path and path == self.echo_path:
+            return EchoResource(self.handlers)
 
-        return ReverseProxyResource(self.handlers, '', '', self.host,
+        return ReverseProxyResource(self.handlers, '', '', '', self.host,
             self.port, self.path + '/' + urlquote(path, safe=""), self.reactor)
 
     def render(self, request):
@@ -68,7 +94,8 @@ class ReverseProxyResource(proxy.ReverseProxyResource):
             for header in headers:
                 for key, value in header.items():
                     request.requestHeaders.addRawHeader(
-                        key.encode(self.encoding), value.encode(self.encoding))
+                        key.encode(self.encoding),
+                        value.encode(self.encoding))
 
             cookies = (yield handler.get_cookies(request)) or []
             for cookie in cookies:
@@ -124,6 +151,7 @@ class ProxySite(server.Site):
         self.path = config.get('path', '')
         self.debug_path = config.get('debug_path', '')
         self.health_path = config.get('health_path', '')
+        self.echo_path = config.get('echo_path', '')
         self.handlers = handlers
 
     def startFactory(self):
@@ -146,5 +174,5 @@ class ProxySite(server.Site):
                 raise ProxySiteException(handler.value)
 
         self.resource = self.resourceClass(started_handlers, self.debug_path,
-            self.health_path, self.upstream_host, int(self.upstream_port),
+            self.health_path, self.echo_path, self.upstream_host, int(self.upstream_port),
             self.path)

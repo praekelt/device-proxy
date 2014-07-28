@@ -94,8 +94,8 @@ class ReverseProxyResource(proxy.ReverseProxyResource):
             for header in headers:
                 for key, value in header.items():
                     request.requestHeaders.addRawHeader(
-                        unicode(key).encode(self.encoding),
-                        unicode(value).encode(self.encoding))
+                        key.encode(self.encoding),
+                        value.encode(self.encoding))
 
             cookies = (yield handler.get_cookies(request)) or []
             for cookie in cookies:

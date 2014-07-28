@@ -1,9 +1,10 @@
 import hashlib
 import json
 
-from twisted.internet.defer import inlineCallbacks, returnValue, succeed
-from twisted.internet import protocol, reactor
-from twisted.protocols.memcache import MemCacheProtocol, DEFAULT_PORT
+from twisted.internet.defer import (inlineCallbacks, returnValue, succeed,
+                                    Deferred)
+from twisted.internet import reactor
+from twisted.protocols.memcache import DEFAULT_PORT
 from twisted.web.template import flattenString
 
 from pywurfl.algorithms import TwoStepAnalysis
@@ -11,6 +12,11 @@ from pywurfl.algorithms import TwoStepAnalysis
 from devproxy.handlers.base import BaseHandler
 from devproxy.handlers.wurfl_handler import wurfl_devices
 from devproxy.handlers.wurfl_handler import debug
+from devproxy.utils.memcached import ReconnectingMemCacheClientFactory
+
+
+class WurflHandlerException(Exception):
+    pass
 
 
 class WurflHandler(BaseHandler):
@@ -20,21 +26,35 @@ class WurflHandler(BaseHandler):
         self.cache_prefix_delimiter = config.get('cache_prefix_delimiter', '#')
         self.cache_lifetime = int(config.get('cache_lifetime', 0))
         self.memcached_config = config.get('memcached', {})
+        self.default_ua_map = config.get('default_ua_map', 'web')
 
     @inlineCallbacks
     def setup_handler(self):
         self.devices = wurfl_devices.devices
         self.algorithm = TwoStepAnalysis(self.devices)
-        self.memcached = yield self.connect_to_memcached(
-                **self.memcached_config)
+        yield self.connect_to_memcached(**self.memcached_config)
         self.namespace = yield self.get_namespace()
         returnValue(self)
 
-    @inlineCallbacks
     def connect_to_memcached(self, host="localhost", port=DEFAULT_PORT):
-        creator = protocol.ClientCreator(reactor, MemCacheProtocol)
-        client = yield creator.connectTCP(host, port)
-        returnValue(client)
+        self.memcached_factory = ReconnectingMemCacheClientFactory()
+        reactor.connectTCP(host, port, self.memcached_factory)
+
+        d = Deferred()
+
+        def cb():
+            if hasattr(self.memcached_factory, 'client'):
+                d.callback(self.memcached_factory.client)
+            else:
+                reactor.callLater(0, cb)
+
+        cb()
+
+        return d
+
+    @property
+    def memcached(self):
+        return self.memcached_factory.client
 
     def get_namespace_key(self):
         return '%s_namespace' % (self.cache_prefix,)
@@ -80,8 +100,10 @@ class WurflHandler(BaseHandler):
 
     @inlineCallbacks
     def handle_request_and_cache(self, cache_key, user_agent, request):
-        device = self.devices.select_ua(user_agent, search=self.algorithm)
-        headers = self.handle_device(request, device)
+        headers = self.handle_user_agent(user_agent)
+        if headers is None:
+            device = self.devices.select_ua(user_agent, search=self.algorithm)
+            headers = self.handle_device(request, device)
         yield self.memcached.set(cache_key, json.dumps(headers),
             expireTime=self.cache_lifetime)
         returnValue(headers)
@@ -100,6 +122,12 @@ class WurflHandler(BaseHandler):
         user_agent = unicode(request.getHeader('User-Agent') or '')
         device = self.devices.select_ua(user_agent, search=self.algorithm)
         return flattenString(None, debug.DebugElement(device))
+
+    def handle_user_agent(self, user_agent):
+        """User agents unknown to Wurfl may require special handling. Override
+        this method to provide it. Return None to indicate no special
+        handling."""
+        return None
 
     def handle_device(self, request, device):
         raise NotImplementedError("Subclasses should implement this")

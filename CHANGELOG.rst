@@ -1,8 +1,8 @@
 Changelog
 =========
 
-next
-----
+0.4.1
+-----
 #. Ensure `EchoResource` properly encodes the headers.
 
 0.4

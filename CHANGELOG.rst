@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.4.1
+-----
+#. Ensure `EchoResource` properly encodes the headers.
+
 0.4
 ---
 #. Introduce `EchoResource` resource which does not proxy but returns to the

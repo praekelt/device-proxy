@@ -40,6 +40,7 @@ class HealthResource(resource.Resource):
 class EchoResource(resource.Resource):
     """Put headers from handlers in reponse header and return"""
     isLeaf = True
+    encoding = 'utf-8'
 
     def __init__(self, handlers, *args, **kwargs):
         resource.Resource.__init__(self, *args, **kwargs)
@@ -55,8 +56,10 @@ class EchoResource(resource.Resource):
             headers = (yield handler.get_headers(request)) or []
             for header in headers:
                 for k, v in header.items():
-                    request.setHeader(k, v)
-        request.write('ok')
+                    request.setHeader(
+                        k.encode(self.encoding),
+                        v.encode(self.encoding))
+        request.write("ok".encode(self.encoding))
         request.finish()
 
 

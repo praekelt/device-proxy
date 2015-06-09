@@ -32,6 +32,8 @@ class ScientiaMobileCloudHandler(WurflHandler):
             raise Exception('smcloud_api_key config option is required')
         self.http_proxy_host = config.get('http_proxy_host')
         self.http_proxy_port = config.get('http_proxy_port')
+        self.http_proxy_username = config.get('http_proxy_username')
+        self.http_proxy_password = config.get('http_proxy_password')
 
     @inlineCallbacks
     def setup_handler(self):
@@ -68,6 +70,13 @@ class ScientiaMobileCloudHandler(WurflHandler):
             'Authorization': 'Basic %s' % b64
         }
         if self.http_proxy_host:
+            if self.http_proxy_username and self.http_proxy_password:
+                auth = base64.encodestring(
+                    '%s:%s' % (
+                        self.http_proxy_username, self.http_proxy_password
+                    ).strip()
+                )
+                headers['Proxy-Authorization'] = ['Basic ' + auth]
             endpoint = HostnameEndpoint(
                 reactor, self.http_proxy_host, self.http_proxy_port or 80
             )

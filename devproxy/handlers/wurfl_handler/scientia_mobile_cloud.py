@@ -1,11 +1,13 @@
 import base64
 import json
 import warnings
+from urllib import urlencode
 
 from devproxy.handlers.wurfl_handler.base import WurflHandler
 from twisted.internet.defer import inlineCallbacks, returnValue
-from twisted.web.client import getPage
-
+from twisted.internet import reactor
+from twisted.internet.endpoints import HostnameEndpoint
+from twisted.web.client import ProxyAgent, getPage
 
 class ScientiaMobileCloudHandlerConnectError(Exception):
     pass
@@ -28,6 +30,8 @@ class ScientiaMobileCloudHandler(WurflHandler):
         self.smcloud_api_key = config.get('smcloud_api_key')
         if self.smcloud_api_key is None:
             raise Exception('smcloud_api_key config option is required')
+        self.http_proxy_host = config.get('http_proxy_host')
+        self.http_proxy_port = config.get('http_proxy_port')
 
     @inlineCallbacks
     def setup_handler(self):
@@ -60,15 +64,23 @@ class ScientiaMobileCloudHandler(WurflHandler):
         # create basic auth string
         b64 = base64.encodestring(self.smcloud_api_key).strip()
         headers = {
-            #User-Agent is set by agent in getPage.
             'X-Cloud-Client': self.SMCLOUD_CONFIG['client_version'],
             'Authorization': 'Basic %s' % b64
         }
-        try:
-            page = yield getPage(self.SMCLOUD_CONFIG['url'], headers=headers,
-                             agent=user_agent, timeout=5)
-        except ConnectError, exc:
-            raise ScientiaMobileCloudHandlerConnectError(exc)
+        if self.http_proxy_host:
+            endpoint = HostnameEndpoint(
+                reactor, self.http_proxy_host, self.http_proxy_port or 80
+            )
+            agent = ProxyAgent(endpoint)
+            qs = urlencode({'agent': user_agent})
+            page = yield agent.request('GET', self.SMCLOUD_CONFIG['url'] + '?' + qs,
+                headers=headers)
+        else:
+            try:
+                page = yield getPage(self.SMCLOUD_CONFIG['url'], headers=headers,
+                    agent=user_agent, timeout=5)
+            except ConnectError, exc:
+                raise ScientiaMobileCloudHandlerConnectError(exc)
         device = json.loads(page)
         returnValue(device)
 

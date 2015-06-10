@@ -4,11 +4,12 @@ import warnings
 from urllib import urlencode
 
 from devproxy.handlers.wurfl_handler.base import WurflHandler
-from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.internet.defer import inlineCallbacks, returnValue, Deferred
 from twisted.internet import reactor
 from twisted.internet.endpoints import HostnameEndpoint, TCP4ClientEndpoint
 from twisted.web.client import ProxyAgent, getPage
 from twisted.web.http_headers import Headers
+from twisted.internet import protocol
 
 
 class ScientiaMobileCloudHandlerConnectError(Exception):
@@ -17,6 +18,20 @@ class ScientiaMobileCloudHandlerConnectError(Exception):
 
 class ProxyConnectError(Exception):
     pass
+
+
+class SimpleReceiver(protocol.Protocol):
+    """Receiver that reads data from  a response"""
+
+    def __init__(self, d):
+        self.buf = ''
+        self.d = d
+
+    def dataReceived(self, data):
+        self.buf += data
+
+    def connectionLost(self, reason):
+        self.d.callback(self.buf)
 
 
 class ScientiaMobileCloudHandler(WurflHandler):
@@ -70,7 +85,7 @@ class ScientiaMobileCloudHandler(WurflHandler):
         """
         Queries ScientiaMobile's API and returns a dictionary of the device.
         """
-        # create basic auth string
+        # Create basic auth string
         b64 = base64.encodestring(self.smcloud_api_key).strip()
         if self.http_proxy_host:
             headers = {
@@ -78,12 +93,12 @@ class ScientiaMobileCloudHandler(WurflHandler):
                 'Authorization': ['Basic %s' % b64]
             }
             if self.http_proxy_username and self.http_proxy_password:
-                print "ADD PROXY AUTH"
                 auth = base64.encodestring(
                     '%s:%s' % (
                         self.http_proxy_username, self.http_proxy_password
                     )
                 ).strip()
+                # Cater for many proxy servers
                 headers['Proxy-Authorization'] = ['Basic %s' % auth]
                 headers['Proxy-Authenticate'] = ['Basic %s' % auth]
                 headers['Proxy-Authentication'] = ['Basic %s' % auth]
@@ -95,31 +110,11 @@ class ScientiaMobileCloudHandler(WurflHandler):
             qs = urlencode({'agent': user_agent})
             response = yield agent.request('GET', self.SMCLOUD_CONFIG['url'] + '?' + qs,
                 headers=Headers(headers))
-            print "RESPONSE CODE = %s" % response.code
             if response.code != 200:
                 raise ProxyConnectError()
-
-            '''
-            from twisted.internet import protocol
-            from twisted.internet.defer import Deferred
-            class SimpleReceiver(protocol.Protocol):
-
-                def __init__(s, d):
-                    s.buf = ''
-                    s.d = d
-
-                def dataReceived(s, data):
-                    print data
-                    s.buf += data
-
-                def connectionLost(s, reason):
-                    s.d.callback(s.buf)
-
             d = Deferred()
-            body = yield response.deliverBody(SimpleReceiver(d))
-            print d
-            print body
-            '''
+            response.deliverBody(SimpleReceiver(d))
+            body = yield d
         else:
             headers = {
                 'X-Cloud-Client': self.SMCLOUD_CONFIG['client_version'],

@@ -51,7 +51,6 @@ class ScientiaMobileCloudHandler(WurflHandler):
         self.smcloud_api_key = config.get('smcloud_api_key')
         if self.smcloud_api_key is None:
             raise Exception('smcloud_api_key config option is required')
-        print config
         self.http_proxy_host = config.get('http_proxy_host')
         self.http_proxy_port = config.get('http_proxy_port')
         self.http_proxy_username = config.get('http_proxy_username')

@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.4.2
+-----
+#. The Wurfl cloud handler can now go through an authenticated proxy.
+
 0.4.1
 -----
 #. Ensure `EchoResource` properly encodes the headers.

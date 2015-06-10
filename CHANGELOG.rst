@@ -1,8 +1,8 @@
 Changelog
 =========
 
-next
-----
+0.4.2
+-----
 #. The Wurfl cloud handler can now go through an authenticated proxy.
 
 0.4.1

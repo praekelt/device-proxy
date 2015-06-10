@@ -6,10 +6,16 @@ from urllib import urlencode
 from devproxy.handlers.wurfl_handler.base import WurflHandler
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet import reactor
-from twisted.internet.endpoints import HostnameEndpoint
+from twisted.internet.endpoints import HostnameEndpoint, TCP4ClientEndpoint
 from twisted.web.client import ProxyAgent, getPage
+from twisted.web.http_headers import Headers
+
 
 class ScientiaMobileCloudHandlerConnectError(Exception):
+    pass
+
+
+class ProxyConnectError(Exception):
     pass
 
 
@@ -30,6 +36,7 @@ class ScientiaMobileCloudHandler(WurflHandler):
         self.smcloud_api_key = config.get('smcloud_api_key')
         if self.smcloud_api_key is None:
             raise Exception('smcloud_api_key config option is required')
+        print config
         self.http_proxy_host = config.get('http_proxy_host')
         self.http_proxy_port = config.get('http_proxy_port')
         self.http_proxy_username = config.get('http_proxy_username')
@@ -65,32 +72,65 @@ class ScientiaMobileCloudHandler(WurflHandler):
         """
         # create basic auth string
         b64 = base64.encodestring(self.smcloud_api_key).strip()
-        headers = {
-            'X-Cloud-Client': self.SMCLOUD_CONFIG['client_version'],
-            'Authorization': 'Basic %s' % b64
-        }
         if self.http_proxy_host:
+            headers = {
+                'X-Cloud-Client': [self.SMCLOUD_CONFIG['client_version']],
+                'Authorization': ['Basic %s' % b64]
+            }
             if self.http_proxy_username and self.http_proxy_password:
+                print "ADD PROXY AUTH"
                 auth = base64.encodestring(
                     '%s:%s' % (
                         self.http_proxy_username, self.http_proxy_password
-                    ).strip()
-                )
-                headers['Proxy-Authorization'] = ['Basic ' + auth]
-            endpoint = HostnameEndpoint(
-                reactor, self.http_proxy_host, self.http_proxy_port or 80
+                    )
+                ).strip()
+                headers['Proxy-Authorization'] = ['Basic %s' % auth]
+                headers['Proxy-Authenticate'] = ['Basic %s' % auth]
+                headers['Proxy-Authentication'] = ['Basic %s' % auth]
+            endpoint = TCP4ClientEndpoint(
+                reactor, self.http_proxy_host, self.http_proxy_port or 80,
+                timeout=5
             )
             agent = ProxyAgent(endpoint)
             qs = urlencode({'agent': user_agent})
-            page = yield agent.request('GET', self.SMCLOUD_CONFIG['url'] + '?' + qs,
-                headers=headers)
+            response = yield agent.request('GET', self.SMCLOUD_CONFIG['url'] + '?' + qs,
+                headers=Headers(headers))
+            print "RESPONSE CODE = %s" % response.code
+            if response.code != 200:
+                raise ProxyConnectError()
+
+            '''
+            from twisted.internet import protocol
+            from twisted.internet.defer import Deferred
+            class SimpleReceiver(protocol.Protocol):
+
+                def __init__(s, d):
+                    s.buf = ''
+                    s.d = d
+
+                def dataReceived(s, data):
+                    print data
+                    s.buf += data
+
+                def connectionLost(s, reason):
+                    s.d.callback(s.buf)
+
+            d = Deferred()
+            body = yield response.deliverBody(SimpleReceiver(d))
+            print d
+            print body
+            '''
         else:
+            headers = {
+                'X-Cloud-Client': self.SMCLOUD_CONFIG['client_version'],
+                'Authorization': 'Basic %s' % b64
+            }
             try:
-                page = yield getPage(self.SMCLOUD_CONFIG['url'], headers=headers,
+                body = yield getPage(self.SMCLOUD_CONFIG['url'], headers=headers,
                     agent=user_agent, timeout=5)
             except ConnectError, exc:
                 raise ScientiaMobileCloudHandlerConnectError(exc)
-        device = json.loads(page)
+        device = json.loads(body)
         returnValue(device)
 
     def handle_device(self, request, device):

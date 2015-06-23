@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.4.3
+-----
+#. Pass user agent as header so Wurfl API call works correctly.
+
 0.4.2
 -----
 #. The Wurfl cloud handler can now go through an authenticated proxy.

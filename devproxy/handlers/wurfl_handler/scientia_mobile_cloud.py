@@ -1,7 +1,6 @@
 import base64
 import json
 import warnings
-from urllib import urlencode
 
 from devproxy.handlers.wurfl_handler.base import WurflHandler
 from twisted.internet.defer import inlineCallbacks, returnValue, Deferred
@@ -89,7 +88,8 @@ class ScientiaMobileCloudHandler(WurflHandler):
         if self.http_proxy_host:
             headers = {
                 'X-Cloud-Client': [self.SMCLOUD_CONFIG['client_version']],
-                'Authorization': ['Basic %s' % b64]
+                'Authorization': ['Basic %s' % b64],
+                'User-Agent': [str(user_agent)],
             }
             if self.http_proxy_username and self.http_proxy_password:
                 auth = base64.encodestring(
@@ -106,8 +106,7 @@ class ScientiaMobileCloudHandler(WurflHandler):
                 timeout=5
             )
             agent = ProxyAgent(endpoint)
-            qs = urlencode({'agent': user_agent})
-            response = yield agent.request('GET', self.SMCLOUD_CONFIG['url'] + '?' + qs,
+            response = yield agent.request('GET', self.SMCLOUD_CONFIG['url'],
                 headers=Headers(headers))
             if response.code != 200:
                 raise ProxyConnectError()

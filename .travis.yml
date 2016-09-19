@@ -3,7 +3,7 @@ python:
   - 2.6
   - 2.7
 install:
-    - pip install coveralls --use-mirrors
+    - pip install coveralls
     - pip install .
 script:
     - coverage run --source=devproxy `which trial` devproxy

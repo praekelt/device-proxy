@@ -19,9 +19,6 @@ class BaseWurflHandlerTestCase(ProxyTestCase):
         yield super(BaseWurflHandlerTestCase, self).setUp()
         self.fake_memcached = FakeMemcached()
         self._mocked_devices = {}
-        #self.patch(ScientiaMobileCloudResolutionTestHandler,
-        #            'get_device_from_smcloud',
-        #            self.patch_get_device_from_smcloud)
         self.patch(ScientiaMobileCloudResolutionTestHandler,
                    'memcached', self.fake_memcached)
         self.patch(ScientiaMobileCloudResolutionTestHandler,

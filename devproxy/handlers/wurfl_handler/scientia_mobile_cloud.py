@@ -1,14 +1,18 @@
 import base64
 import json
 import warnings
+import traceback
 
-from devproxy.handlers.wurfl_handler.base import WurflHandler
 from twisted.internet.defer import inlineCallbacks, returnValue, Deferred
 from twisted.internet import reactor
 from twisted.internet.endpoints import HostnameEndpoint, TCP4ClientEndpoint
 from twisted.web.client import ProxyAgent, getPage
 from twisted.web.http_headers import Headers
 from twisted.internet import protocol
+from twisted.internet.error import ConnectError
+from twisted.python import log
+
+from devproxy.handlers.wurfl_handler.base import WurflHandler
 
 
 class ScientiaMobileCloudHandlerConnectError(Exception):
@@ -83,47 +87,56 @@ class ScientiaMobileCloudHandler(WurflHandler):
         """
         Queries ScientiaMobile's API and returns a dictionary of the device.
         """
+
+        # Minimal default
+        device = {'capabilities': {'resolution_width': 0}}
+
         # Create basic auth string
         b64 = base64.encodestring(self.smcloud_api_key).strip()
-        if self.http_proxy_host:
-            headers = {
-                'X-Cloud-Client': [self.SMCLOUD_CONFIG['client_version']],
-                'Authorization': ['Basic %s' % b64],
-                'User-Agent': [str(user_agent)],
-            }
-            if self.http_proxy_username and self.http_proxy_password:
-                auth = base64.encodestring(
-                    '%s:%s' % (
-                        self.http_proxy_username, self.http_proxy_password
-                    )
-                ).strip()
-                # Cater for many proxy servers
-                headers['Proxy-Authorization'] = ['Basic %s' % auth]
-                headers['Proxy-Authenticate'] = ['Basic %s' % auth]
-                headers['Proxy-Authentication'] = ['Basic %s' % auth]
-            endpoint = TCP4ClientEndpoint(
-                reactor, self.http_proxy_host, self.http_proxy_port or 80,
-                timeout=5
-            )
-            agent = ProxyAgent(endpoint)
-            response = yield agent.request('GET', self.SMCLOUD_CONFIG['url'],
-                headers=Headers(headers))
-            if response.code != 200:
-                raise ProxyConnectError()
-            d = Deferred()
-            response.deliverBody(SimpleReceiver(d))
-            body = yield d
-        else:
-            headers = {
-                'X-Cloud-Client': self.SMCLOUD_CONFIG['client_version'],
-                'Authorization': 'Basic %s' % b64
-            }
-            try:
-                body = yield getPage(self.SMCLOUD_CONFIG['url'], headers=headers,
-                    agent=user_agent, timeout=5)
-            except ConnectError, exc:
-                raise ScientiaMobileCloudHandlerConnectError(exc)
-        device = json.loads(body)
+
+        try:
+            if self.http_proxy_host:
+                headers = {
+                    'X-Cloud-Client': [self.SMCLOUD_CONFIG['client_version']],
+                    'Authorization': ['Basic %s' % b64],
+                    'User-Agent': [str(user_agent)],
+                }
+                if self.http_proxy_username and self.http_proxy_password:
+                    auth = base64.encodestring(
+                        '%s:%s' % (
+                            self.http_proxy_username, self.http_proxy_password
+                        )
+                    ).strip()
+                    # Cater for many proxy servers
+                    headers['Proxy-Authorization'] = ['Basic %s' % auth]
+                    headers['Proxy-Authenticate'] = ['Basic %s' % auth]
+                    headers['Proxy-Authentication'] = ['Basic %s' % auth]
+                endpoint = TCP4ClientEndpoint(
+                    reactor, self.http_proxy_host, self.http_proxy_port or 80,
+                    timeout=5
+                )
+                agent = ProxyAgent(endpoint)
+                response = yield agent.request('GET',
+                    self.SMCLOUD_CONFIG['url'], headers=Headers(headers))
+                if response.code != 200:
+                    raise ProxyConnectError()
+                d = Deferred()
+                response.deliverBody(SimpleReceiver(d))
+                body = yield d
+            else:
+                headers = {
+                    'X-Cloud-Client': self.SMCLOUD_CONFIG['client_version'],
+                    'Authorization': 'Basic %s' % b64
+                }
+                try:
+                    body = yield getPage(self.SMCLOUD_CONFIG['url'],
+                        headers=headers, agent=user_agent, timeout=5)
+                except ConnectError, exc:
+                    raise ScientiaMobileCloudHandlerConnectError(exc)
+            device = json.loads(body)
+        except Exception as exc:
+            log.err(traceback.format_exc())
+
         returnValue(device)
 
     def handle_device(self, request, device):

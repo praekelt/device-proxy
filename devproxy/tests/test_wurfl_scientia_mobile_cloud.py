@@ -1,23 +1,27 @@
 import hashlib
 
 from twisted.internet.defer import inlineCallbacks, succeed
+from twisted.internet import defer, reactor
+from twisted.web.server import Site
 
+from devproxy.handlers.wurfl_handler.scientia_mobile_cloud import ProxyConnectError
 from devproxy.handlers.wurfl_handler.scientia_mobile_cloud_resolution \
     import ScientiaMobileCloudResolutionTestHandler
+from devproxy.proxy import ReverseProxyResource
 from devproxy.utils import http
 from devproxy.tests.utils import FakeMemcached, ProxyTestCase
 
 
-class WurlfHandlerTestCase(ProxyTestCase):
+class BaseWurflHandlerTestCase(ProxyTestCase):
 
     @inlineCallbacks
     def setUp(self):
-        yield super(WurlfHandlerTestCase, self).setUp()
+        yield super(BaseWurflHandlerTestCase, self).setUp()
         self.fake_memcached = FakeMemcached()
         self._mocked_devices = {}
-        self.patch(ScientiaMobileCloudResolutionTestHandler,
-                    'get_device_from_smcloud',
-                    self.patch_get_device_from_smcloud)
+        #self.patch(ScientiaMobileCloudResolutionTestHandler,
+        #            'get_device_from_smcloud',
+        #            self.patch_get_device_from_smcloud)
         self.patch(ScientiaMobileCloudResolutionTestHandler,
                    'memcached', self.fake_memcached)
         self.patch(ScientiaMobileCloudResolutionTestHandler,
@@ -51,6 +55,16 @@ class WurlfHandlerTestCase(ProxyTestCase):
 
     def patch_get_device_from_smcloud(self, user_agent):
         return succeed(self._mocked_devices.get(user_agent, {}))
+
+
+class WurflHandlerTestCase(BaseWurflHandlerTestCase):
+
+    @inlineCallbacks
+    def setUp(self):
+        yield super(WurflHandlerTestCase, self).setUp()
+        self.patch(ScientiaMobileCloudResolutionTestHandler,
+                    'get_device_from_smcloud',
+                    self.patch_get_device_from_smcloud)
 
     @inlineCallbacks
     def test_wurfl_nokia_lookup(self):
@@ -141,3 +155,24 @@ class WurlfHandlerTestCase(ProxyTestCase):
         req = yield self.mocked_backend.queue.get()
         self.assertEqual(req.requestHeaders.getRawHeaders('x-ua-header'),
                          ['bot'])
+
+
+class BrokenWurflHandlerTestCase(BaseWurflHandlerTestCase):
+    """The Wurfl service fails in this test. Confirm exceptions do not
+    propagate but are only logged."""
+
+    @inlineCallbacks
+    def test_it(self):
+        proxy, url = self.start_proxy(self.wurfl_handlers)
+        response = yield http.request(url, headers={
+            'User-Agent': self.iphone_ua,
+        })
+        self.assertEqual(response.delivered_body, 'foo')
+        req = yield self.mocked_backend.queue.get()
+
+        # The default device capabilities map to a medium device
+        self.assertEqual(
+            req.requestHeaders.getRawHeaders('X-UA-header'),
+            ['medium']
+        )
+

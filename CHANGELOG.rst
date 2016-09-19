@@ -1,6 +1,10 @@
 Changelog
 =========
 
+next
+----
+#. Log exceptions rather than letting them propagate. This prevents outages on Wurfl Cloud affecting your site.
+
 0.4.3
 -----
 #. Pass user agent as header so Wurfl API call works correctly.
